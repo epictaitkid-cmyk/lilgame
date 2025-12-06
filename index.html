@@ -1,735 +1,987 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Passing Through Town: Bloomington Edition v2</title>
-    <style>
-        /* Using a slightly chunky, retro font */
-        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+  <meta charset="UTF-8" />
+  <title>Passing Through Town – Bloomington Crossy</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
 
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #222;
-            font-family: 'VT323', monospace;
-            touch-action: none;
-        }
+    body {
+      background: radial-gradient(circle at top, #020617, #000);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #e5e7eb;
+    }
 
-        #game-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            /* Bloomington Sky: Fade from Indiana pale blue to a warmer horizon */
-            background: linear-gradient(to bottom, #87CEEB 0%, #C4E0E5 70%, #F3E5AB 100%);
-        }
+    #gameContainer {
+      position: relative;
+      width: 900px;
+      height: 540px;
+      border-radius: 24px;
+      overflow: hidden;
+      background: radial-gradient(circle at 20% 0%, #020617, #020617 45%, #000014 100%);
+      box-shadow: 0 28px 60px rgba(0,0,0,0.95);
+      border: 1px solid rgba(148,163,184,0.4);
+    }
 
-        canvas {
-            display: block;
-            /* Subtle shadow to make the game world pop */
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
+    #gameCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #020617;
+    }
 
-        #ui-layer {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 5;
-        }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, rgba(15,23,42,0.9), rgba(15,23,42,0.98));
+      text-align: center;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      z-index: 5;
+    }
 
-        .score-board {
-            position: absolute;
-            top: 20px;
-            left: 30px;
-            font-size: 50px;
-            color: white;
-            /* Crimson text shadow for definition */
-            text-shadow: 3px 3px 0px #7D110C;
-        }
+    .overlay.hidden {
+      display: none !important;
+    }
 
-        /* Styles for floating coin text (+5) */
-        .floating-text {
-            position: absolute;
-            font-size: 30px;
-            color: #FFD700; /* Gold */
-            text-shadow: 2px 2px 0px #7D110C;
-            font-weight: bold;
-            pointer-events: none;
-            animation: floatUp 1s ease-out forwards;
-        }
+    h1 {
+      font-size: 40px;
+      margin-bottom: 4px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-shadow: 0 0 16px rgba(220,38,38,0.9);
+    }
 
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
-        }
+    h2 {
+      font-size: 26px;
+      margin-bottom: 6px;
+      text-shadow: 0 0 10px rgba(248,250,252,0.9);
+    }
 
-        #start-screen, #game-over-screen {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(125, 17, 12, 0.8); /* Crimson tinted overlay */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            pointer-events: auto;
-            z-index: 10;
-            backdrop-filter: blur(2px);
-        }
+    p {
+      opacity: 0.9;
+      margin-bottom: 14px;
+    }
 
-        h1 {
-            color: #F3E5AB; /* Cream */
-            text-shadow: 4px 4px 0px #4a0a07;
-            text-align: center;
-            font-size: 60px;
-            margin-bottom: 10px;
-            line-height: 0.9;
-        }
+    button {
+      border: none;
+      padding: 10px 20px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg,#22c55e,#22d3ee);
+      color: #020617;
+      box-shadow: 0 4px 0 #0f766e, 0 0 14px rgba(45,212,191,0.9);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.12s ease;
+      margin-top: 10px;
+    }
 
-        p {
-            font-size: 24px;
-            color: #F3E5AB;
-            text-align: center;
-            max-width: 600px;
-        }
+    button:hover {
+      filter: brightness(1.1);
+    }
 
-        button {
-            margin-top: 30px;
-            padding: 10px 40px;
-            font-family: 'VT323', monospace;
-            font-size: 30px;
-            background-color: #F3E5AB; /* Cream background */
-            color: #7D110C; /* Crimson Text */
-            border: 4px solid #7D110C;
-            cursor: pointer;
-            box-shadow: 0 8px 0 #4a0a07;
-            transition: all 0.1s;
-        }
+    button:active {
+      transform: translateY(2px) scale(0.98);
+      box-shadow: 0 2px 0 #0f766e, 0 0 9px rgba(45,212,191,0.9);
+    }
 
-        button:active {
-            transform: translateY(6px);
-            box-shadow: 0 2px 0 #4a0a07;
-        }
+    .small {
+      padding: 8px 16px;
+      font-size: 11px;
+      margin: 6px;
+    }
 
-        .hidden { display: none !important; }
+    .info {
+      font-size: 12px;
+      opacity: 0.8;
+      max-width: 460px;
+      margin-bottom: 8px;
+    }
 
-        .controls-hint {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            text-align: center;
-            color: #7D110C;
-            font-size: 20px;
-            pointer-events: none;
-            opacity: 0.7;
-        }
-    </style>
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      background: rgba(15,23,42,0.9);
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+    }
+
+    .dot-road {
+      background: linear-gradient(135deg,#f97316,#facc15);
+      box-shadow: 0 0 6px rgba(251,191,36,0.9);
+    }
+
+    .dot-water {
+      background: linear-gradient(135deg,#0ea5e9,#22d3ee);
+      box-shadow: 0 0 6px rgba(56,189,248,0.9);
+    }
+
+    .dot-rail {
+      background: linear-gradient(135deg,#f43f5e,#fb7185);
+      box-shadow: 0 0 6px rgba(248,113,113,0.9);
+    }
+
+    .dot-grass {
+      background: linear-gradient(135deg,#22c55e,#4ade80);
+      box-shadow: 0 0 6px rgba(74,222,128,0.9);
+    }
+
+    .score-hud {
+      position: absolute;
+      top: 12px;
+      left: 18px;
+      z-index: 4;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.8);
+      border: 1px solid rgba(148,163,184,0.6);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .score-hud span.label {
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      opacity: 0.8;
+      font-size: 10px;
+    }
+
+    .score-hud span.value {
+      font-weight: 700;
+      font-size: 13px;
+    }
+  </style>
 </head>
 <body>
+  <div id="gameContainer">
+    <canvas id="gameCanvas" width="900" height="540"></canvas>
 
-<div id="game-container">
-    <canvas id="gameCanvas"></canvas>
-    
-    <div id="ui-layer" id="ui-container">
-        <div class="score-board" id="score-display">0</div>
+    <div class="score-hud" id="hud">
+      <span class="label">Score</span>
+      <span class="value" id="scoreText">0</span>
+      <span class="label">Best</span>
+      <span class="value" id="bestText">0</span>
     </div>
 
-    <div id="start-screen">
-        <h1>PASSING THROUGH<br>TOWN</h1>
-        <p>Bloomington Edition</p>
-        <p style="font-size: 20px; margin-top: 20px; opacity: 0.8">Collect coins & avoid the Campus Bus!</p>
-        <button onclick="startGame()">Start Game</button>
+    <!-- Start Menu -->
+    <div id="startOverlay" class="overlay">
+      <h1>Passing Through Town</h1>
+      <h2>Bloomington, Indiana</h2>
+      <p>Hop past Sample Gates, cross Kirkwood, float the campus river, and dodge trains near the B-Line Trail.</p>
+      <div class="info">
+        Controls: <b>WASD</b> or <b>Arrow keys</b> (<b>↑ / W / Space</b> to hop forward).<br>
+        One hop at a time, like Crossy Road. Survive as long as you can.
+      </div>
+      <div class="pill-row">
+        <div class="pill"><span class="dot dot-grass"></span> Grass: Sample Gates, Dunn Meadow, IU Quad, Bryan Park, B-Line Trail</div>
+        <div class="pill"><span class="dot dot-road"></span> Roads: Kirkwood, College, Walnut, 3rd St – avoid cars</div>
+        <div class="pill"><span class="dot dot-water"></span> Water: Campus river / Griffy – stay on logs</div>
+        <div class="pill"><span class="dot dot-rail"></span> Rail: B-Line style crossing – watch for the train</div>
+      </div>
+      <button id="startButton">Start Hopping</button>
     </div>
 
-    <div id="game-over-screen" class="hidden">
-        <h1 style="font-size: 80px">OH NO!</h1>
-        <p id="final-score-text">Score: 0</p>
-        <button onclick="resetGame()">Try Again</button>
+    <!-- Game Over -->
+    <div id="gameOverOverlay" class="overlay hidden">
+      <h2>Trip Cut Short</h2>
+      <p id="gameOverReason">You got hit on College Ave.</p>
+      <p class="info" id="gameOverScore">Score: 0 • Best: 0</p>
+      <div>
+        <button class="small" id="retryButton">Try Again</button>
+        <button class="small" id="menuButton">Back to Menu</button>
+      </div>
     </div>
+  </div>
 
-    <div class="controls-hint">Tap screen or use Arrow Keys</div>
-</div>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
 
-<script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const uiContainer = document.getElementById('ui-container');
-    
-    // Game Constants
-    const TILE_SIZE = 42; // Slightly larger tiles
-    const COLS = 13; 
-    const ROWS_VISIBLE = 17;
-    
-    // Enhanced Palette
-    const COLORS = {
-        crimson: '#990000', // Slightly deeper IU crimson
-        cream: '#F3E5AB',
-        asphalt: '#3a3a3a',
-        grass: '#4A6B3E', 
-        grassLight: '#5C8A4E',
-        water: '#4FC3F7',
-        waterDeep: '#0288D1',
-        limestone: '#D8D8D6',
-        limestoneDark: '#A0A0A0',
-        treeTrunk: '#5D4037',
-        gold: '#FFD700',
-        leaves: ['#E65100', '#B71C1C', '#FBC02D', '#FF8F00'] // More varied autumn leaves
-    };
+    const WIDTH = canvas.width;
+    const HEIGHT = canvas.height;
+    const CELL = 40;
+    const VISIBLE_LANES = Math.floor(HEIGHT / CELL) + 4;
 
-    let width, height;
-    let gameActive = false;
-    let score = 0;
-    let maxDistance = 0; // Track furthest distance reached
+    const startOverlay = document.getElementById("startOverlay");
+    const gameOverOverlay = document.getElementById("gameOverOverlay");
+    const startButton = document.getElementById("startButton");
+    const retryButton = document.getElementById("retryButton");
+    const menuButton = document.getElementById("menuButton");
+    const gameOverReason = document.getElementById("gameOverReason");
+    const gameOverScore = document.getElementById("gameOverScore");
+    const scoreText = document.getElementById("scoreText");
+    const bestText = document.getElementById("bestText");
+
+    let gameState = "menu";  // "menu" | "playing" | "dead"
     let lanes = [];
     let player;
-    let cameraY = 0;
-    let gameSpeed = 0.002;
-    let frame = 0;
+    let cameraRow = 0;
+    let score = 0;
+    let bestScore = 0;
+    let rngSeed = 42;
 
-    function resize() {
-        width = window.innerWidth;
-        height = window.innerHeight;
-        canvas.width = width;
-        canvas.height = height;
+    // Simple PRNG for consistent world
+    function rand() {
+      rngSeed = (rngSeed * 16807) % 2147483647;
+      return (rngSeed - 1) / 2147483646;
     }
-    window.addEventListener('resize', resize);
-    resize();
 
-    // ---------------------------------------------------------
-    // Rendering Helpers (Cleaned Up)
-    // ---------------------------------------------------------
-    
-    function shadeColor(color, percent) {
-        // Ensure 6 digit hex
-        if (color.length === 4) {
-             color = '#' + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
+    const STREETS = [
+      "Kirkwood Ave", "College Ave", "Walnut St", "3rd St", "10th St",
+      "Atwater Ave", "4th St", "Indiana Ave"
+    ];
+
+    const GRASS_SPOTS = [
+      "Sample Gates", "IU Old Crescent", "Dunn Meadow", "IU Quad",
+      "Bryan Park", "Courthouse Square", "B-Line Trail"
+    ];
+
+    const WATER_SPOTS = ["Campus River", "Griffy Lake", "Jordan Creek"];
+    const RAIL_SPOTS = ["B-Line Crossing", "Rail Overpass"];
+
+    function randCarColor() {
+      const colors = [
+        "#e11d48","#f97316","#22c55e","#3b82f6","#a855f7","#eab308","#06b6d4"
+      ];
+      return colors[Math.floor(rand() * colors.length)];
+    }
+
+    function createLane(rowIndex) {
+      if (rowIndex === 0) {
+        return {
+          type: "grass",
+          label: "Downtown Start",
+          isTrail: false,
+          cars: [],
+          logs: [],
+          train: null,
+          decoSeed: rand()
+        };
+      }
+
+      const r = rand();
+      let type;
+      if (rowIndex < 4) {
+        type = "grass";
+      } else if (r < 0.45) {
+        type = "grass";
+      } else if (r < 0.75) {
+        type = "road";
+      } else if (r < 0.9) {
+        type = "water";
+      } else {
+        type = "rail";
+      }
+
+      if (type === "grass") {
+        const isTrail = rand() < 0.2;
+        return {
+          type: "grass",
+          label: isTrail ? "B-Line Trail" : GRASS_SPOTS[Math.floor(rand() * GRASS_SPOTS.length)],
+          isTrail,
+          cars: [],
+          logs: [],
+          train: null,
+          decoSeed: rand()
+        };
+      }
+
+      if (type === "road") {
+        const direction = rand() < 0.5 ? 1 : -1;
+        const speed = 55 + rand() * 65;
+        const carCount = 3 + Math.floor(rand() * 3);
+        const cars = [];
+        for (let i = 0; i < carCount; i++) {
+          const startX = rand() * (WIDTH + 400) - 200;
+          cars.push({
+            x: startX,
+            width: CELL * (1.4 + rand() * 0.6),
+            color: randCarColor()
+          });
         }
-        let R = parseInt(color.substring(1,3),16);
-        let G = parseInt(color.substring(3,5),16);
-        let B = parseInt(color.substring(5,7),16);
+        return {
+          type: "road",
+          label: STREETS[Math.floor(rand() * STREETS.length)],
+          direction,
+          speed,
+          cars,
+          logs: [],
+          train: null,
+          isTrail: false,
+          decoSeed: rand()
+        };
+      }
 
-        R = parseInt(R * (100 + percent) / 100);
-        G = parseInt(G * (100 + percent) / 100);
-        B = parseInt(B * (100 + percent) / 100);
+      if (type === "water") {
+        const direction = rand() < 0.5 ? 1 : -1;
+        const speed = 30 + rand() * 40;
+        const logCount = 3 + Math.floor(rand() * 3);
+        const logs = [];
+        for (let i = 0; i < logCount; i++) {
+          const startX = rand() * (WIDTH + 400) - 200;
+          logs.push({
+            x: startX,
+            width: CELL * (2 + rand() * 1.5)
+          });
+        }
+        return {
+          type: "water",
+          label: WATER_SPOTS[Math.floor(rand() * WATER_SPOTS.length)],
+          direction,
+          speed,
+          cars: [],
+          logs,
+          train: null,
+          isTrail: false,
+          decoSeed: rand()
+        };
+      }
 
-        R = (R<255)?R:255; G = (G<255)?G:255; B = (B<255)?B:255; 
-        R = (R>0)?R:0; G = (G>0)?G:0; B = (B>0)?B:0;
-
-        const RR = R.toString(16).padStart(2, '0');
-        const GG = G.toString(16).padStart(2, '0');
-        const BB = B.toString(16).padStart(2, '0');
-
-        return "#"+RR+GG+BB;
+      if (type === "rail") {
+        const trainSpeed = 240 + rand() * 60;
+        return {
+          type: "rail",
+          label: RAIL_SPOTS[Math.floor(rand() * RAIL_SPOTS.length)],
+          cars: [],
+          logs: [],
+          isTrail: false,
+          decoSeed: rand(),
+          train: {
+            active: false,
+            x: -800,
+            width: 700,
+            speed: trainSpeed,
+            timer: 1 + rand() * 3
+          }
+        };
+      }
     }
 
-    function drawCube(x, y, z, w, h, d, color, faceColor = null) {
-        const screenX = (width / 2) + (x - COLS/2) * TILE_SIZE;
-        // Raised camera slightly for better view
-        const screenY = (height / 2 + 180) - (y * TILE_SIZE * 0.7) + (cameraY * TILE_SIZE * 0.7); 
-        const renderY = screenY - z;
-        const size = TILE_SIZE;
+    function worldToScreen(row, col) {
+      const y = HEIGHT - (row - cameraRow + 1) * CELL + CELL * 0.2;
+      const x = WIDTH / 2 + col * CELL;
+      return { x, y };
+    }
 
-        // Draw Side (Depth) - Softer shading (-15%)
-        ctx.fillStyle = shadeColor(color, -15);
-        ctx.fillRect(screenX, renderY + size - d, w * size, d);
+    function resetGame() {
+      rngSeed = Math.floor(Math.random() * 1000000) + 1;
+      lanes = [];
+      for (let i = 0; i < VISIBLE_LANES + 20; i++) {
+        lanes.push(createLane(i));
+      }
 
-        // Draw Top
-        ctx.fillStyle = faceColor || color;
-        ctx.fillRect(screenX, renderY - d, w * size, size);
+      const startPos = worldToScreen(0, 0);
+      player = {
+        gridX: 0,
+        gridY: 0,
+        size: CELL * 0.8,
+        moving: false,
+        moveTime: 0,
+        moveDuration: 0.16,
+        fromX: startPos.x,
+        fromY: startPos.y,
+        toX: startPos.x,
+        toY: startPos.y,
+        drawX: startPos.x,
+        drawY: startPos.y
+      };
 
-        // Draw Side Shadow (Right Face) - Softer shading (-30%)
-        ctx.fillStyle = shadeColor(color, -30);
+      cameraRow = 0;
+      score = 0;
+      updateScoreHUD();
+    }
+
+    function updateScoreHUD() {
+      scoreText.textContent = score;
+      bestText.textContent = bestScore;
+    }
+
+    function showOverlay(el) {
+      el.classList.remove("hidden");
+    }
+
+    function hideOverlay(el) {
+      el.classList.add("hidden");
+    }
+
+    // Input / movement
+    function tryMove(dx, dy) {
+      if (player.moving) return;
+
+      const newX = player.gridX + dx;
+      const newY = player.gridY + dy;
+
+      // horizontal bounds similar-ish to Crossy Road feel
+      if (newX < -6 || newX > 6) return;
+      if (newY < 0) return;
+
+      while (newY + 20 > lanes.length) {
+        lanes.push(createLane(lanes.length));
+      }
+
+      player.gridX = newX;
+      player.gridY = newY;
+
+      const fromPos = { x: player.drawX, y: player.drawY };
+      const toPos = worldToScreen(player.gridY, player.gridX);
+
+      player.fromX = fromPos.x;
+      player.fromY = fromPos.y;
+      player.toX = toPos.x;
+      player.toY = toPos.y;
+      player.moveTime = 0;
+      player.moving = true;
+
+      score = Math.max(score, player.gridY);
+      if (score > bestScore) bestScore = score;
+      updateScoreHUD();
+    }
+
+    function onKeyDown(e) {
+      if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","KeyW","KeyA","KeyS","KeyD","Space"].includes(e.code)) {
+        e.preventDefault();
+      }
+
+      if (gameState === "menu") return;
+      if (gameState !== "playing") return;
+
+      if (e.code === "ArrowUp" || e.code === "KeyW" || e.code === "Space") {
+        tryMove(0, 1);
+      } else if (e.code === "ArrowDown" || e.code === "KeyS") {
+        tryMove(0, -1);
+      } else if (e.code === "ArrowLeft" || e.code === "KeyA") {
+        tryMove(-1, 0);
+      } else if (e.code === "ArrowRight" || e.code === "KeyD") {
+        tryMove(1, 0);
+      }
+    }
+
+    function onKeyUp(e) {
+      if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","KeyW","KeyA","KeyS","KeyD","Space"].includes(e.code)) {
+        e.preventDefault();
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+
+    canvas.addEventListener("mousedown", () => {
+      if (gameState === "playing") {
+        tryMove(0, 1);
+      }
+    });
+
+    // Buttons
+    startButton.addEventListener("click", () => {
+      hideOverlay(startOverlay);
+      gameState = "playing";
+      resetGame();
+    });
+
+    retryButton.addEventListener("click", () => {
+      hideOverlay(gameOverOverlay);
+      gameState = "playing";
+      resetGame();
+    });
+
+    menuButton.addEventListener("click", () => {
+      hideOverlay(gameOverOverlay);
+      showOverlay(startOverlay);
+      gameState = "menu";
+    });
+
+    // Game loop
+    let lastTime = performance.now();
+
+    function loop(time) {
+      const dt = Math.min((time - lastTime) / 1000, 0.05);
+      lastTime = time;
+
+      if (gameState === "playing") {
+        update(dt);
+      }
+
+      render();
+      requestAnimationFrame(loop);
+    }
+
+    function update(dt) {
+      updatePlayer(dt);
+      updateWorld(dt);
+      checkHazards();
+      updateCamera(dt);
+    }
+
+    function updatePlayer(dt) {
+      if (!player.moving) {
+        const p = worldToScreen(player.gridY, player.gridX);
+        player.drawX = p.x;
+        player.drawY = p.y;
+        return;
+      }
+
+      player.moveTime += dt;
+      let t = player.moveTime / player.moveDuration;
+      if (t >= 1) {
+        t = 1;
+        player.moving = false;
+      }
+
+      const lerp = (a, b, u) => a + (b - a) * u;
+      const baseX = lerp(player.fromX, player.toX, t);
+      const baseY = lerp(player.fromY, player.toY, t);
+
+      const hopH = CELL * 0.5;
+      const hop = Math.sin(t * Math.PI) * hopH;
+
+      player.drawX = baseX;
+      player.drawY = baseY - hop;
+    }
+
+    function updateWorld(dt) {
+      for (let i = 0; i < lanes.length; i++) {
+        const lane = lanes[i];
+
+        if (lane.type === "road") {
+          const dir = lane.direction;
+          for (const car of lane.cars) {
+            car.x += dir * lane.speed * dt;
+            if (dir === 1 && car.x > WIDTH + 200) {
+              car.x = -240 - rand() * 200;
+              car.width = CELL * (1.4 + rand() * 0.6);
+              car.color = randCarColor();
+            } else if (dir === -1 && car.x < -240) {
+              car.x = WIDTH + 240 + rand() * 200;
+              car.width = CELL * (1.4 + rand() * 0.6);
+              car.color = randCarColor();
+            }
+          }
+        }
+
+        if (lane.type === "water") {
+          const dir = lane.direction;
+          for (const log of lane.logs) {
+            log.x += dir * lane.speed * dt;
+            if (dir === 1 && log.x > WIDTH + 260) {
+              log.x = -320 - rand() * 200;
+            } else if (dir === -1 && log.x < -320) {
+              log.x = WIDTH + 260 + rand() * 200;
+            }
+          }
+        }
+
+        if (lane.type === "rail" && lane.train) {
+          const tr = lane.train;
+          tr.timer -= dt;
+          if (!tr.active && tr.timer <= 0) {
+            tr.active = true;
+            tr.x = -tr.width - 200;
+          }
+          if (tr.active) {
+            tr.x += tr.speed * dt;
+            if (tr.x > WIDTH + 400) {
+              tr.active = false;
+              tr.timer = 3 + rand() * 4;
+            }
+          }
+        }
+      }
+    }
+
+    function checkHazards() {
+      const rowIndex = player.gridY;
+      if (rowIndex < 0 || rowIndex >= lanes.length) return;
+      const lane = lanes[rowIndex];
+
+      const px = WIDTH / 2 + player.gridX * CELL;
+      const py = HEIGHT - (rowIndex - cameraRow + 1) * CELL + CELL * 0.2;
+      const half = player.size * 0.5;
+
+      if (lane.type === "grass") return;
+
+      if (lane.type === "road") {
+        for (const car of lane.cars) {
+          const carX = car.x;
+          const carW = car.width;
+          const carY = HEIGHT - (rowIndex - cameraRow + 1) * CELL + CELL * 0.2;
+          const carH = CELL * 0.7;
+
+          const overlapX = Math.abs(px - (carX + carW / 2)) < (half + carW / 2 - 4);
+          const overlapY = Math.abs(py - (carY + carH / 2)) < (half + carH / 2 - 4);
+          if (overlapX && overlapY) {
+            triggerDeath("You were clipped by a car on " + lane.label + ".");
+            return;
+          }
+        }
+      } else if (lane.type === "water") {
+        let onLog = false;
+        for (const log of lane.logs) {
+          const logX = log.x;
+          const logW = log.width;
+          if (px > logX - 4 && px < logX + logW + 4) {
+            onLog = true;
+          }
+        }
+        if (!onLog) {
+          triggerDeath("You slipped into " + lane.label + ".");
+          return;
+        }
+      } else if (lane.type === "rail") {
+        const tr = lane.train;
+        if (tr && tr.active) {
+          const trainX = tr.x;
+          const trainW = tr.width;
+          if (px > trainX && px < trainX + trainW) {
+            triggerDeath("The train at " + lane.label + " arrived a bit too soon.");
+            return;
+          }
+        }
+      }
+    }
+
+    function triggerDeath(reason) {
+      gameState = "dead";
+      gameOverReason.textContent = reason;
+      gameOverScore.textContent = `Score: ${score} • Best: ${bestScore}`;
+      showOverlay(gameOverOverlay);
+    }
+
+    function updateCamera(dt) {
+      const target = player.gridY - 3;
+      const alpha = 0.1;
+      cameraRow += (target - cameraRow) * alpha;
+    }
+
+    function drawBackground() {
+      // Gradient sky
+      const grad = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+      grad.addColorStop(0, "#020617");
+      grad.addColorStop(0.3, "#020617");
+      grad.addColorStop(1, "#000");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+      // Simple skyline / Sample Gates-ish silhouette
+      ctx.save();
+      ctx.translate(0, HEIGHT * 0.25);
+      ctx.fillStyle = "rgba(15,23,42,0.95)";
+      ctx.beginPath();
+      ctx.moveTo(80, 80);
+      ctx.lineTo(130, 20);
+      ctx.lineTo(180, 80);
+      ctx.lineTo(200, 80);
+      ctx.lineTo(220, 25);
+      ctx.lineTo(240, 80);
+      ctx.lineTo(260, 80);
+      ctx.lineTo(280, 25);
+      ctx.lineTo(300, 80);
+      ctx.lineTo(400, 80);
+      ctx.lineTo(420, 35);
+      ctx.lineTo(440, 80);
+      ctx.lineTo(520, 80);
+      ctx.lineTo(540, 28);
+      ctx.lineTo(560, 80);
+      ctx.lineTo(640, 80);
+      ctx.lineTo(670, 35);
+      ctx.lineTo(700, 80);
+      ctx.lineTo(820, 80);
+      ctx.lineTo(820, 140);
+      ctx.lineTo(80, 140);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // Crimson glow
+      const g2 = ctx.createRadialGradient(WIDTH * 0.2, HEIGHT * 0.1, 10, WIDTH * 0.2, HEIGHT * 0.1, 260);
+      g2.addColorStop(0, "rgba(248,113,113,0.4)");
+      g2.addColorStop(1, "transparent");
+      ctx.fillStyle = g2;
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    }
+
+    function drawLane(rowIndex) {
+      const lane = lanes[rowIndex];
+      if (!lane) return;
+
+      const top = HEIGHT - (rowIndex - cameraRow + 1) * CELL;
+      const bottom = top + CELL;
+      if (bottom < -CELL || top > HEIGHT + CELL) return;
+
+      // Base color
+      if (lane.type === "grass") {
+        ctx.fillStyle = lane.isTrail ? "#065f46" : "#14532d";
+      } else if (lane.type === "road") {
+        ctx.fillStyle = "#111827";
+      } else if (lane.type === "water") {
+        ctx.fillStyle = "#0b3a5a";
+      } else {
+        ctx.fillStyle = "#1f2937";
+      }
+      ctx.fillRect(0, top, WIDTH, CELL);
+
+      if (lane.type === "grass") {
+        drawGrassDecor(rowIndex, lane, top, bottom);
+      } else if (lane.type === "road") {
+        drawRoadDecor(rowIndex, lane, top, bottom);
+      } else if (lane.type === "water") {
+        drawWaterDecor(rowIndex, lane, top, bottom);
+      } else if (lane.type === "rail") {
+        drawRailDecor(rowIndex, lane, top, bottom);
+      }
+
+      // Lane label plaque
+      ctx.fillStyle = "rgba(15,23,42,0.85)";
+      ctx.fillRect(10, top + 4, 180, 18);
+      ctx.fillStyle = "rgba(248,250,252,0.9)";
+      ctx.font = "10px system-ui";
+      ctx.fillText(lane.label, 16, top + 17);
+    }
+
+    function drawGrassDecor(rowIndex, lane, top, bottom) {
+      // bushes / trees
+      const seed = lane.decoSeed;
+      const count = 4;
+      for (let i = 0; i < count; i++) {
+        const rx = (i + seed * 5) * 190 % (WIDTH + 60) - 30;
+        ctx.fillStyle = lane.isTrail ? "#047857" : "#166534";
         ctx.beginPath();
-        ctx.moveTo(screenX + w*size, renderY - d);
-        ctx.lineTo(screenX + w*size, renderY - d + size);
-        ctx.lineTo(screenX + w*size + (d/2), renderY - d + size - (d/2));
-        ctx.lineTo(screenX + w*size + (d/2), renderY - (d/2) - d);
+        ctx.arc(rx, bottom - 10, 10, 0, Math.PI * 2);
         ctx.fill();
+        ctx.fillStyle = "#4ade80";
+        ctx.beginPath();
+        ctx.arc(rx - 2, bottom - 12, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // B-Line asphalt path
+      if (lane.isTrail) {
+        const mid = (top + bottom) / 2;
+        ctx.fillStyle = "#020617";
+        ctx.fillRect(0, mid - 6, WIDTH, 12);
+        ctx.strokeStyle = "rgba(248,250,252,0.4)";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([16, 8]);
+        ctx.beginPath();
+        ctx.moveTo(0, mid);
+        ctx.lineTo(WIDTH, mid);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // IU banner every few rows
+      if (!lane.isTrail && rowIndex % 9 === 0) {
+        const bx = WIDTH - 70;
+        const by = top + 4;
+        ctx.fillStyle = "#7f1d1d";
+        ctx.fillRect(bx, by, 50, CELL - 16);
+        ctx.fillStyle = "#fef2f2";
+        ctx.font = "bold 16px system-ui";
+        ctx.fillText("IU", bx + 10, by + 24);
+      }
     }
 
-    // UI Helper for Coin Popups
-    function spawnFloatingText(x, y, text) {
-        const el = document.createElement('div');
-        el.className = 'floating-text';
-        el.innerText = text;
-        // Convert grid world pos to screen pos roughly for UI placement
-        const screenX = (width / 2) + (x - COLS/2) * TILE_SIZE;
-        const screenY = (height / 2) - (y - cameraY) * (TILE_SIZE * 0.7);
-        
-        el.style.left = screenX + 'px';
-        el.style.top = screenY + 'px';
-        uiContainer.appendChild(el);
-        // Remove after animation ends
-        setTimeout(() => el.remove(), 1000);
+    function drawRoadDecor(rowIndex, lane, top, bottom) {
+      // dashed center line
+      ctx.strokeStyle = "rgba(249,250,251,0.7)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([20, 16]);
+      ctx.beginPath();
+      ctx.moveTo(0, (top + bottom) / 2);
+      ctx.lineTo(WIDTH, (top + bottom) / 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // cars
+      for (const car of lane.cars) {
+        const y = top + CELL * 0.15;
+        const h = CELL * 0.7;
+
+        // shadow
+        ctx.fillStyle = "rgba(15,23,42,0.7)";
+        ctx.fillRect(car.x + 3, y + h * 0.5, car.width - 6, h * 0.3);
+
+        ctx.fillStyle = car.color;
+        ctx.fillRect(car.x, y, car.width, h);
+
+        // windows
+        ctx.fillStyle = "rgba(15,23,42,0.9)";
+        ctx.fillRect(car.x + 6, y + 6, car.width - 12, h * 0.5 - 6);
+
+        // headlights
+        ctx.fillStyle = "#fef9c3";
+        if (lane.direction === 1) {
+          ctx.fillRect(car.x + car.width - 6, y + 10, 4, 6);
+          ctx.fillRect(car.x + car.width - 6, y + h - 16, 4, 6);
+        } else {
+          ctx.fillRect(car.x + 2, y + 10, 4, 6);
+          ctx.fillRect(car.x + 2, y + h - 16, 4, 6);
+        }
+      }
     }
 
-    // ---------------------------------------------------------
-    // Classes
-    // ---------------------------------------------------------
+    function drawWaterDecor(rowIndex, lane, top, bottom) {
+      // wave line
+      ctx.strokeStyle = "rgba(248,250,252,0.25)";
+      ctx.lineWidth = 1.2;
+      const mid = (top + bottom) / 2;
+      ctx.beginPath();
+      for (let x = 0; x <= WIDTH; x += 14) {
+        const y = mid + Math.sin((x + rowIndex * 37) / 25) * 4;
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
 
-    class Coin {
-        constructor(x) {
-            this.x = x;
-            this.zOffset = 0;
-        }
-        draw(laneIndex) {
-            // Bobbing animation based on global frame count and x position
-            this.zOffset = Math.sin((frame + this.x*10) * 0.1) * 5 + 5;
-            drawCube(this.x + 0.25, laneIndex, this.zOffset, 0.5, 0.5, 8, COLORS.gold, '#FFFFAA');
-        }
+      // logs
+      for (const log of lane.logs) {
+        const y = top + CELL * 0.15;
+        const h = CELL * 0.7;
+
+        ctx.fillStyle = "#92400e";
+        ctx.fillRect(log.x, y, log.width, h);
+        ctx.fillStyle = "#fbbf24";
+        ctx.fillRect(log.x + 6, y + h / 2 - 3, log.width - 12, 6);
+      }
     }
 
-    class Player {
-        constructor() {
-            this.gridX = Math.floor(COLS / 2);
-            this.gridY = 0; 
-            this.z = 0; 
-            this.isMoving = false;
-            this.moveProgress = 0;
-            this.targetX = this.gridX;
-            this.targetY = this.gridY;
-            this.startX = this.gridX;
-            this.startY = this.gridY;
+    function drawRailDecor(rowIndex, lane, top, bottom) {
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, top, WIDTH, CELL);
+
+      // ties
+      ctx.fillStyle = "#111827";
+      for (let x = -20; x < WIDTH + 20; x += 30) {
+        ctx.fillRect(x, top + CELL * 0.1, 16, CELL * 0.8);
+      }
+
+      // rails
+      ctx.fillStyle = "#9ca3af";
+      ctx.fillRect(0, top + CELL * 0.25, WIDTH, 4);
+      ctx.fillRect(0, top + CELL * 0.75, WIDTH, 4);
+
+      const tr = lane.train;
+      if (tr && tr.active) {
+        const trainY = top + CELL * 0.18;
+        const trainH = CELL * 0.75;
+
+        ctx.fillStyle = "#f97316";
+        ctx.fillRect(tr.x, trainY, tr.width, trainH);
+
+        // windows
+        ctx.fillStyle = "#0f172a";
+        const windows = 6;
+        const spacing = tr.width / (windows + 1);
+        for (let i = 1; i <= windows; i++) {
+          const wx = tr.x + spacing * i - 10;
+          ctx.fillRect(wx, trainY + 10, 20, trainH - 20);
         }
-
-        move(dx, dy) {
-            if (this.isMoving) return;
-            
-            const nextX = this.gridX + dx;
-            const nextY = this.gridY + dy;
-
-            if (nextX < 0 || nextX >= COLS) return;
-            if (nextY < this.gridY && dy < 0) return; 
-
-            let lane = lanes.find(l => l.index === nextY);
-            if (lane && lane.obstacles[nextX]) return; 
-
-            this.startX = this.gridX;
-            this.startY = this.gridY;
-            this.targetX = nextX;
-            this.targetY = nextY;
-            this.isMoving = true;
-            this.moveProgress = 0;
-
-            // Score only increases if reaching new distance
-            if (nextY > maxDistance) {
-                maxDistance = nextY;
-                score++;
-                updateScoreDisplay();
-            }
-        }
-
-        update() {
-            if (this.isMoving) {
-                this.moveProgress += 0.15;
-                if (this.moveProgress >= 1) {
-                    this.isMoving = false;
-                    this.gridX = this.targetX;
-                    this.gridY = this.targetY;
-                    this.z = 0;
-                    checkCollision(); 
-                } else {
-                    // Higher jump arc
-                    this.z = Math.sin(this.moveProgress * Math.PI) * 18;
-                }
-            }
-            if (this.gridY < cameraY - 2) gameOver();
-        }
-
-        draw() {
-            let renderX = this.gridX;
-            let renderY = this.gridY;
-
-            if (this.isMoving) {
-                renderX = this.startX + (this.targetX - this.startX) * this.moveProgress;
-                renderY = this.startY + (this.targetY - this.startY) * this.moveProgress;
-            }
-
-            // Refined Bloomington Student Model
-            // Legs
-            drawCube(renderX + 0.25, renderY, this.z, 0.2, 0.3, 8, '#222'); 
-            drawCube(renderX + 0.55, renderY, this.z, 0.2, 0.3, 8, '#222');
-            // Torso (Crimson Hoodie)
-            drawCube(renderX + 0.2, renderY, this.z + 8, 0.6, 0.5, 12, COLORS.crimson);
-            // Backpack (Cream, slightly more defined)
-            drawCube(renderX + 0.15, renderY - 0.15, this.z + 10, 0.7, 0.2, 10, COLORS.cream);
-            // Head
-            drawCube(renderX + 0.25, renderY, this.z + 20, 0.5, 0.5, 9, '#F5CCB0'); 
-            // Hair (Brown)
-            drawCube(renderX + 0.25, renderY - 0.05, this.z + 26, 0.5, 0.6, 3, '#4E342E');
-        }
+      }
     }
 
-    class Lane {
-        constructor(index) {
-            this.index = index;
-            this.type = 'grass';
-            this.obstacles = new Array(COLS).fill(false);
-            // "Decorations" are small details on grass (tufts, pebbles)
-            this.decorations = new Array(COLS).fill(false); 
-            this.vehicles = [];
-            this.logs = [];
-            this.coins = []; // Array to hold coin objects on this lane
-            this.speed = 0;
-            this.generate();
-        }
+    function drawPlayer() {
+      if (!player) return;
+      const x = player.drawX;
+      const y = player.drawY;
+      const size = player.size;
 
-        generate() {
-            // Safe zone at start
-            if (this.index < 3) {
-                this.type = 'grass';
-                if (this.index === 0) {
-                    this.obstacles[3] = 'gate_left';
-                    this.obstacles[9] = 'gate_right';
-                }
-                return;
-            }
+      // shadow
+      const row = player.gridY;
+      const shadowY = HEIGHT - (row - cameraRow + 1) * CELL + CELL * 0.25;
+      ctx.fillStyle = "rgba(15,23,42,0.7)";
+      ctx.beginPath();
+      ctx.arc(x, shadowY, size * 0.4, 0, Math.PI * 2);
+      ctx.fill();
 
-            const rand = Math.random();
-            // Road Logic
-            if (rand < 0.4) {
-                this.type = 'road';
-                this.speed = (Math.random() * 0.05 + 0.03) * (Math.random() < 0.5 ? 1 : -1);
-                const count = Math.floor(Math.random() * 3) + 1;
-                for(let i=0; i<count; i++) {
-                    this.vehicles.push({
-                        x: Math.random() * COLS,
-                        type: Math.random() < 0.3 ? 'bus' : 'car'
-                    });
-                }
-            // Grass Logic
-            } else if (rand < 0.75) {
-                this.type = 'grass';
-                for(let i=0; i<COLS; i++) {
-                    const obstacleChance = Math.random();
-                    if (obstacleChance < 0.15) {
-                        this.obstacles[i] = Math.random() < 0.8 ? 'tree' : 'rock';
-                    } else if (obstacleChance > 0.6) {
-                        // Add subtle decorations if no obstacle
-                        const decorType = Math.random();
-                        if (decorType < 0.3) this.decorations[i] = 'tuft';
-                        else if (decorType < 0.4) this.decorations[i] = 'pebble';
-                        else if (decorType < 0.45) this.decorations[i] = 'flower_cream';
-                        else if (decorType < 0.5) this.decorations[i] = 'flower_crimson';
-                        
-                        // Chance for a coin on safe grass
-                        if (Math.random() < 0.05 && !this.obstacles[i]) {
-                            this.coins.push(new Coin(i));
-                        }
-                    }
-                }
-            // Water Logic
-            } else {
-                this.type = 'water';
-                this.speed = (Math.random() * 0.04 + 0.02) * (Math.random() < 0.5 ? 1 : -1);
-                const count = Math.floor(Math.random() * 3) + 2;
-                for(let i=0; i<count; i++) {
-                    let logW = Math.random() < 0.5 ? 2 : 3;
-                    let logX = Math.random() * COLS;
-                    this.logs.push({
-                        x: logX,
-                        width: logW
-                    });
-                    // Chance for coin on a log
-                    if (Math.random() < 0.3) {
-                         this.coins.push(new Coin(logX + logW/2 - 0.5));
-                    }
-                }
-            }
-        }
+      // body
+      ctx.fillStyle = "#22d3ee";
+      ctx.fillRect(x - size / 2, y - size / 2, size, size);
 
-        update() {
-            if (this.type === 'road') {
-                this.vehicles.forEach(v => {
-                    v.x += this.speed;
-                    if (this.speed > 0 && v.x > COLS + 2) v.x = -4;
-                    if (this.speed < 0 && v.x < -4) v.x = COLS + 2;
-                });
-            } else if (this.type === 'water') {
-                this.logs.forEach(l => {
-                    l.x += this.speed;
-                    if (this.speed > 0 && l.x > COLS + 2) l.x = -l.width - 1;
-                    if (this.speed < 0 && l.x < -l.width - 1) l.x = COLS + 2;
-                });
-                // Move coins attached to logs
-                 this.coins.forEach(c => {
-                    c.x += this.speed;
-                 });
-            }
-        }
+      // outline
+      ctx.strokeStyle = "rgba(15,23,42,0.95)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x - size / 2, y - size / 2, size, size);
 
-        draw() {
-            let baseColor = COLORS.grass;
-            if (this.index % 2 !== 0) baseColor = COLORS.grassLight;
-            if (this.type === 'road') baseColor = COLORS.asphalt;
-            if (this.type === 'water') baseColor = COLORS.waterDeep;
+      // face square
+      const inner = size * 0.55;
+      ctx.fillStyle = "rgba(15,23,42,0.9)";
+      ctx.fillRect(x - inner / 2, y - inner / 2, inner, inner);
 
-            for (let x = 0; x < COLS; x++) {
-                let tileColor = baseColor;
-                // Limestone sidewalks
-                if (this.type === 'grass' && this.index % 2 === 0 && x % 2 === 0) tileColor = COLORS.limestone;
-                
-                // Draw Ground
-                drawCube(x, this.index, -10, 1, 1, 10, tileColor);
-
-                // Draw Water Surface
-                if (this.type === 'water') {
-                    drawCube(x, this.index, -3, 1, 1, 3, COLORS.water, shadeColor(COLORS.water, 10));
-                }
-
-                // Draw Decorations (Grass tufts, pebbles)
-                if (this.decorations[x]) {
-                    if (this.decorations[x] === 'tuft') drawCube(x+0.3, this.index, 0, 0.4, 0.4, 3, COLORS.grassLight);
-                    if (this.decorations[x] === 'pebble') drawCube(x+0.4, this.index, 0, 0.2, 0.2, 2, COLORS.limestoneDark);
-                    if (this.decorations[x] === 'flower_cream') drawCube(x+0.4, this.index, 0, 0.2, 0.2, 4, COLORS.cream);
-                    if (this.decorations[x] === 'flower_crimson') drawCube(x+0.4, this.index, 0, 0.2, 0.2, 4, COLORS.crimson);
-                }
-
-                // Draw Static Obstacles
-                if (this.obstacles[x]) {
-                    if (this.obstacles[x] === 'tree') {
-                        drawCube(x + 0.3, this.index, 0, 0.4, 0.4, 10, COLORS.treeTrunk);
-                        let leafColor = COLORS.leaves[Math.floor((x + this.index) % COLORS.leaves.length)];
-                        drawCube(x, this.index, 10, 1, 1, 15, leafColor);
-                        drawCube(x + 0.2, this.index, 25, 0.6, 0.6, 10, leafColor);
-                    } else if (this.obstacles[x] === 'rock') {
-                        drawCube(x + 0.1, this.index, 0, 0.8, 0.8, 8, COLORS.limestoneDark);
-                    } else if (this.obstacles[x].includes('gate')) {
-                        // Sample Gates
-                        drawCube(x, this.index, 0, 1, 1, 45, COLORS.limestone);
-                        drawCube(x - 0.1, this.index, 40, 1.2, 1.2, 5, shadeColor(COLORS.limestone, -10));
-                        // Add a little crimson detail on top
-                         drawCube(x + 0.3, this.index, 45, 0.4, 0.4, 2, COLORS.crimson);
-                    }
-                }
-            }
-
-            // Draw Logs
-            if (this.type === 'water') {
-                this.logs.forEach(l => {
-                    drawCube(l.x, this.index, -1, l.width, 0.8, 6, '#5D4037', '#795548');
-                });
-            }
-
-             // Draw Coins
-            this.coins.forEach(coin => {
-                // Only draw if within bounds (especially important for water coins moving offscreen)
-                if(coin.x > -1 && coin.x < COLS) {
-                    coin.draw(this.index);
-                }
-            });
-
-            // Draw Vehicles
-            if (this.type === 'road') {
-                this.vehicles.forEach(v => {
-                    if (v.type === 'bus') {
-                        // Campus Bus - Redesigned slightly
-                        drawCube(v.x, this.index, 0, 3.2, 0.9, 14, '#EEEEEE'); // White Body
-                        drawCube(v.x + 0.1, this.index, 4, 3.0, 0.9, 6, COLORS.crimson); // Crimson Stripe
-                        drawCube(v.x + 0.3, this.index, 12, 2.6, 0.9, 3, '#333'); // Windows
-                        // Wheels
-                        drawCube(v.x + 0.4, this.index, -1, 0.6, 1, 3, '#111');
-                        drawCube(v.x + 2.2, this.index, -1, 0.6, 1, 3, '#111');
-                    } else {
-                        // Car
-                        let carColor = ['#D32F2F', '#FBC02D', '#1976D2'][Math.floor(Math.abs(v.x) % 3)];
-                        drawCube(v.x, this.index, 0, 1.8, 0.8, 9, carColor);
-                        drawCube(v.x + 0.2, this.index, 9, 1.4, 0.6, 5, '#81D4FA'); // Windows
-                    }
-                });
-            }
-        }
-    }
-
-    // ---------------------------------------------------------
-    // Game Management
-    // ---------------------------------------------------------
-
-    function initGame() {
-        lanes = [];
-        score = 0;
-        maxDistance = 0;
-        cameraY = 0;
-        gameSpeed = 0.002;
-        // Fill initial screen
-        for(let i=0; i<ROWS_VISIBLE + 5; i++) lanes.push(new Lane(i));
-        player = new Player();
-        updateScoreDisplay();
-    }
-
-    function updateScoreDisplay() {
-        document.getElementById('score-display').innerText = score;
-    }
-
-    function checkCollision() {
-        const currentLane = lanes.find(l => l.index === player.gridY);
-        if (!currentLane) return;
-
-        // 1. Coin Collection Check
-        // Iterate backwards so we can splice safely
-        for (let i = currentLane.coins.length - 1; i >= 0; i--) {
-            const coin = currentLane.coins[i];
-            // Simple proximity check for pickup
-            if (Math.abs(player.gridX - coin.x) < 0.7) {
-                // Coin Collected!
-                currentLane.coins.splice(i, 1); // Remove coin
-                score += 5; // Add bonus points
-                updateScoreDisplay();
-                // Trigger UI effect
-                spawnFloatingText(player.gridX, player.gridY, "+5");
-            }
-        }
-
-        // 2. Water/Log Check
-        if (currentLane.type === 'water') {
-            let onLog = false;
-            let logSpeed = 0;
-            currentLane.logs.forEach(l => {
-                // Slightly forgiving bounding box for logs
-                if (player.gridX + 0.6 > l.x && player.gridX + 0.4 < l.x + l.width) {
-                    onLog = true;
-                    logSpeed = currentLane.speed;
-                }
-            });
-            if (onLog) {
-                // Ride the log
-                player.gridX += logSpeed; 
-                player.targetX += logSpeed; 
-                player.startX += logSpeed;
-            } else {
-                if (!player.isMoving) gameOver(); // Drowned
-            }
-        }
-    }
-
-    function checkDynamicCollisions() {
-        const pX = player.gridX + 0.5; 
-        // Rounding needed because moving logs offset Y slightly in visual terms
-        const currentLane = lanes.find(l => l.index === Math.round(player.gridY));
-        
-        // Vehicle collision
-        if (currentLane && currentLane.type === 'road') {
-            currentLane.vehicles.forEach(v => {
-                const vCenter = v.x + (v.type === 'bus' ? 1.6 : 0.9);
-                const vWidth = v.type === 'bus' ? 3.0 : 1.6;
-                // Slightly tighter hitboxes
-                if (Math.abs(pX - vCenter) < (vWidth / 2)) gameOver();
-            });
-        }
-        // Off-screen bounds check (log riding)
-        if (player.gridX < -1 || player.gridX > COLS) gameOver();
-    }
-
-    function update() {
-        if (!gameActive) return;
-        frame++; // Global frame counter for animations
-
-        cameraY += gameSpeed;
-        // Keep player from getting too far up screen
-        if (player.gridY > cameraY + 7) cameraY = player.gridY - 7;
-
-        const lastLaneIndex = lanes[lanes.length-1].index;
-        // Ensure enough lanes ahead
-        if (lastLaneIndex < cameraY + ROWS_VISIBLE + 5) {
-            lanes.push(new Lane(lastLaneIndex + 1));
-        }
-        // Cleanup old lanes
-        if (lanes[0].index < cameraY - 6) lanes.shift();
-
-        lanes.forEach(l => l.update());
-        player.update();
-        checkDynamicCollisions();
-        
-        // Slowly increase speed cap
-        if(gameSpeed < 0.015) gameSpeed += 0.000002;
+      // eyes
+      ctx.fillStyle = "#e5e7eb";
+      const eyeOffset = inner * 0.18;
+      const eyeSize = 3;
+      ctx.beginPath();
+      ctx.arc(x - eyeOffset, y - eyeOffset, eyeSize, 0, Math.PI * 2);
+      ctx.arc(x + eyeOffset, y - eyeOffset, eyeSize, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     function render() {
-        ctx.clearRect(0, 0, width, height);
-        
-        // Filter and Sort Lanes (Draw Back to Front painter's algorithm)
-        const visibleLanes = lanes.filter(l => l.index > cameraY - 5 && l.index < cameraY + ROWS_VISIBLE + 5);
-        visibleLanes.sort((a, b) => b.index - a.index);
+      drawBackground();
 
-        visibleLanes.forEach(lane => {
-            lane.draw();
-            // Determine when to draw the player relative to the lanes for depth
-            let playerRenderY = player.isMoving ? 
-                player.startY + (player.targetY - player.startY) * player.moveProgress : 
-                player.gridY;
-            // Draw player when rendering the lane directly "beneath" them visually
-            if (Math.round(playerRenderY) === lane.index) player.draw();
-        });
-    }
-
-    function loop() {
-        update();
-        render();
-        requestAnimationFrame(loop);
-    }
-
-    // ---------------------------------------------------------
-    // Input Handling
-    // ---------------------------------------------------------
-
-    function handleInput(key) {
-        if (!gameActive) return;
-        switch(key) {
-            case 'ArrowUp': case 'w': player.move(0, 1); break;
-            case 'ArrowDown': case 's': player.move(0, -1); break;
-            case 'ArrowLeft': case 'a': player.move(-1, 0); break;
-            case 'ArrowRight': case 'd': player.move(1, 0); break;
+      const firstRow = Math.floor(cameraRow) - 2;
+      const lastRow = Math.floor(cameraRow) + VISIBLE_LANES + 2;
+      for (let row = firstRow; row <= lastRow; row++) {
+        if (row >= 0 && row < lanes.length) {
+          drawLane(row);
         }
+      }
+
+      if (gameState !== "menu") {
+        drawPlayer();
+      }
     }
 
-    window.addEventListener('keydown', e => handleInput(e.key));
-
-    let touchStartX = 0, touchStartY = 0;
-    window.addEventListener('touchstart', e => {
-        touchStartX = e.changedTouches[0].screenX;
-        touchStartY = e.changedTouches[0].screenY;
-        e.preventDefault(); // Prevent default scrolling actions
-    }, {passive: false});
-
-    window.addEventListener('touchend', e => {
-        if (!gameActive) return;
-        const dx = e.changedTouches[0].screenX - touchStartX;
-        const dy = e.changedTouches[0].screenY - touchStartY;
-        // Determine swipe direction vs tap
-        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
-            handleInput(dx > 0 ? 'ArrowRight' : 'ArrowLeft');
-        } else if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 30) {
-             handleInput(dy < 0 ? 'ArrowUp' : 'ArrowDown');
-        } else {
-             handleInput('ArrowUp'); // Tap defaults to forward
-        }
-        e.preventDefault();
-    }, {passive: false});
-
-    function startGame() {
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('game-over-screen').classList.add('hidden');
-        initGame();
-        gameActive = true;
+    // Death + camera
+    function triggerDeath(reason) {
+      gameState = "dead";
+      gameOverReason.textContent = reason;
+      gameOverScore.textContent = `Score: ${score} • Best: ${bestScore}`;
+      showOverlay(gameOverOverlay);
     }
 
-    function resetGame() { startGame(); }
-    
-    function gameOver() {
-        if(!gameActive) return; // Prevent double trigger
-        gameActive = false;
-        document.getElementById('game-over-screen').classList.remove('hidden');
-        // Show final score combined
-        document.getElementById('final-score-text').innerText = `Final Score: ${score}`;
+    function updateCamera(dt) {
+      const target = player.gridY - 3;
+      const alpha = 0.15;
+      cameraRow += (target - cameraRow) * alpha;
     }
 
-    // Start main loop
-    initGame();
-    loop();
-
-</script>
+    // Init
+    resetGame();
+    requestAnimationFrame(loop);
+  </script>
 </body>
 </html>
