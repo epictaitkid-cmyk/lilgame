@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mini Geometry Dash</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #202a3d, #050711);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+
+    #gameContainer {
+      position: relative;
+      width: 900px;
+      height: 500px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+      background: linear-gradient(#121826, #060912);
+    }
+
+    #gameCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(#1b2340, #05060a);
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, rgba(0,0,0,0.7), rgba(0,0,0,0.95));
+      text-align: center;
+      padding: 24px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    h1 {
+      font-size: 42px;
+      margin-bottom: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+
+    p {
+      opacity: 0.8;
+      margin-bottom: 18px;
+    }
+
+    .level-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    button {
+      border: none;
+      padding: 10px 18px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: #ffbb33;
+      color: #1a1425;
+      box-shadow: 0 4px 0 #d18f15;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.12s ease;
+    }
+
+    button:hover {
+      filter: brightness(1.1);
+    }
+
+    button:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #916312;
+    }
+
+    .small {
+      padding: 8px 14px;
+      font-size: 12px;
+    }
+
+    .info {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-top: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div id="gameContainer">
+    <canvas id="gameCanvas" width="900" height="500"></canvas>
+
+    <!-- Main menu -->
+    <div id="menuOverlay" class="overlay">
+      <h1>Mini Geometry Dash</h1>
+      <p>Select a level to begin. Jump over spikes and reach the end!</p>
+      <h2>Levels</h2>
+      <div class="level-buttons">
+        <button data-level="0">Level 1</button>
+        <button data-level="1">Level 2</button>
+        <button data-level="2">Level 3</button>
+        <button data-level="3">Level 4</button>
+        <button data-level="4">Level 5</button>
+      </div>
+      <div class="info">
+        Controls: Space / Click / Tap to jump. <br />
+        Reach the glowing portal at the end to win.
+      </div>
+    </div>
+
+    <!-- Level complete -->
+    <div id="completeOverlay" class="overlay hidden">
+      <h2>Level Complete!</h2>
+      <p id="completeText"></p>
+      <div class="level-buttons">
+        <button id="nextLevelBtn" class="small">Next Level</button>
+        <button id="retryLevelBtn" class="small">Replay</button>
+        <button id="backToMenuBtn" class="small">Menu</button>
+      </div>
+    </div>
+
+    <!-- Game over -->
+    <div id="gameOverOverlay" class="overlay hidden">
+      <h2>Game Over</h2>
+      <p>You hit a spike! Try again.</p>
+      <div class="level-buttons">
+        <button id="retryDeathBtn" class="small">Retry</button>
+        <button id="menuDeathBtn" class="small">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const menuOverlay = document.getElementById("menuOverlay");
+    const completeOverlay = document.getElementById("completeOverlay");
+    const gameOverOverlay = document.getElementById("gameOverOverlay");
+
+    const completeText = document.getElementById("completeText");
+    const nextLevelBtn = document.getElementById("nextLevelBtn");
+    const retryLevelBtn = document.getElementById("retryLevelBtn");
+    const backToMenuBtn = document.getElementById("backToMenuBtn");
+    const retryDeathBtn = document.getElementById("retryDeathBtn");
+    const menuDeathBtn = document.getElementById("menuDeathBtn");
+
+    const WIDTH = canvas.width;
+    const HEIGHT = canvas.height;
+
+    const GROUND_Y = HEIGHT - 80;
+    const PLAYER_SIZE = 28;
+
+    let gameState = "menu"; // "menu" | "playing" | "dead" | "complete"
+    let currentLevelIndex = 0;
+    let levelTimer = 0;
+
+    const player = {
+      x: 120,
+      y: GROUND_Y - PLAYER_SIZE,
+      width: PLAYER_SIZE,
+      height: PLAYER_SIZE,
+      vy: 0,
+      onGround: true,
+      color: "#00ffc8"
+    };
+
+    // Level definitions: speed, length, spikes at (x, height), background colors
+    const levels = [
+      {
+        name: "Warmup Plains",
+        speed: 4.0,
+        gravity: 0.6,
+        jumpForce: 12,
+        length: 2500,
+        bg1: "#1b2340",
+        bg2: "#060912",
+        floorColor: "#273047",
+        spikeColor: "#ff3163",
+        portalColor: "#00ff88",
+        spikes: [
+          { x: 500, h: 50 },
+          { x: 650, h: 70 },
+          { x: 800, h: 60 },
+          { x: 1050, h: 80 },
+          { x: 1320, h: 70 },
+          { x: 1600, h: 90 },
+          { x: 1900, h: 60 }
+        ]
+      },
+      {
+        name: "Spike Alley",
+        speed: 5.0,
+        gravity: 0.7,
+        jumpForce: 13,
+        length: 2900,
+        bg1: "#261b40",
+        bg2: "#0b0317",
+        floorColor: "#3a294f",
+        spikeColor: "#ffb14a",
+        portalColor: "#3dfffc",
+        spikes: [
+          { x: 450, h: 80 },
+          { x: 600, h: 80 },
+          { x: 750, h: 80 },
+          { x: 900, h: 80 },
+          { x: 1200, h: 100 },
+          { x: 1350, h: 70 },
+          { x: 1550, h: 90 },
+          { x: 1750, h: 60 },
+          { x: 1900, h: 80 },
+          { x: 2300, h: 90 }
+        ]
+      },
+      {
+        name: "Neon Caverns",
+        speed: 5.5,
+        gravity: 0.7,
+        jumpForce: 13,
+        length: 3200,
+        bg1: "#042d3b",
+        bg2: "#02070a",
+        floorColor: "#074356",
+        spikeColor: "#ff4ad8",
+        portalColor: "#f5ff3a",
+        spikes: [
+          { x: 550, h: 60 },
+          { x: 700, h: 110 },
+          { x: 880, h: 80 },
+          { x: 1100, h: 70 },
+          { x: 1300, h: 110 },
+          { x: 1600, h: 90 },
+          { x: 1750, h: 70 },
+          { x: 1950, h: 110 },
+          { x: 2200, h: 75 },
+          { x: 2450, h: 90 },
+          { x: 2700, h: 90 }
+        ]
+      },
+      {
+        name: "Velocity Run",
+        speed: 6.2,
+        gravity: 0.75,
+        jumpForce: 13.5,
+        length: 3600,
+        bg1: "#382309",
+        bg2: "#090201",
+        floorColor: "#4e3110",
+        spikeColor: "#39ffb5",
+        portalColor: "#ff3b3b",
+        spikes: [
+          { x: 500, h: 90 },
+          { x: 650, h: 110 },
+          { x: 800, h: 80 },
+          { x: 950, h: 90 },
+          { x: 1180, h: 120 },
+          { x: 1450, h: 80 },
+          { x: 1600, h: 110 },
+          { x: 1900, h: 90 },
+          { x: 2150, h: 70 },
+          { x: 2400, h: 120 },
+          { x: 2700, h: 80 },
+          { x: 2950, h: 120 },
+          { x: 3200, h: 90 }
+        ]
+      },
+      {
+        name: "Final Rush",
+        speed: 7.1,
+        gravity: 0.78,
+        jumpForce: 14,
+        length: 4000,
+        bg1: "#2b003b",
+        bg2: "#050006",
+        floorColor: "#3d0755",
+        spikeColor: "#fffb3a",
+        portalColor: "#00ffea",
+        spikes: [
+          { x: 450, h: 90 },
+          { x: 650, h: 110 },
+          { x: 820, h: 80 },
+          { x: 1000, h: 120 },
+          { x: 1200, h: 90 },
+          { x: 1450, h: 70 },
+          { x: 1650, h: 110 },
+          { x: 1900, h: 100 },
+          { x: 2150, h: 80 },
+          { x: 2400, h: 110 },
+          { x: 2650, h: 130 },
+          { x: 2900, h: 90 },
+          { x: 3150, h: 120 },
+          { x: 3400, h: 80 },
+          { x: 3650, h: 110 }
+        ]
+      }
+    ];
+
+    let cameraX = 0;
+
+    function resetPlayerForLevel(level) {
+      player.x = 120;
+      player.y = GROUND_Y - PLAYER_SIZE;
+      player.vy = 0;
+      player.onGround = true;
+      cameraX = 0;
+      levelTimer = 0;
+    }
+
+    function startLevel(index) {
+      currentLevelIndex = index;
+      resetPlayerForLevel(levels[index]);
+      gameState = "playing";
+      hideOverlay(menuOverlay);
+      hideOverlay(completeOverlay);
+      hideOverlay(gameOverOverlay);
+    }
+
+    function showOverlay(el) {
+      el.classList.remove("hidden");
+    }
+    function hideOverlay(el) {
+      el.classList.add("hidden");
+    }
+
+    // Menu level buttons
+    document.querySelectorAll("#menuOverlay button[data-level]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const levelIndex = Number(btn.getAttribute("data-level"));
+        startLevel(levelIndex);
+      });
+    });
+
+    nextLevelBtn.addEventListener("click", () => {
+      const next = Math.min(currentLevelIndex + 1, levels.length - 1);
+      startLevel(next);
+    });
+
+    retryLevelBtn.addEventListener("click", () => {
+      startLevel(currentLevelIndex);
+    });
+
+    backToMenuBtn.addEventListener("click", () => {
+      gameState = "menu";
+      showOverlay(menuOverlay);
+      hideOverlay(completeOverlay);
+      hideOverlay(gameOverOverlay);
+    });
+
+    retryDeathBtn.addEventListener("click", () => {
+      startLevel(currentLevelIndex);
+    });
+
+    menuDeathBtn.addEventListener("click", () => {
+      gameState = "menu";
+      showOverlay(menuOverlay);
+      hideOverlay(completeOverlay);
+      hideOverlay(gameOverOverlay);
+    });
+
+    // Jump controls
+    function tryJump() {
+      if (gameState !== "playing") return;
+      if (player.onGround) {
+        const level = levels[currentLevelIndex];
+        player.vy = -level.jumpForce;
+        player.onGround = false;
+      }
+    }
+
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        tryJump();
+      }
+    });
+
+    canvas.addEventListener("mousedown", () => {
+      tryJump();
+    });
+
+    canvas.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      tryJump();
+    }, { passive: false });
+
+    // Simple AABB rectangle collision
+    function rectIntersect(a, b) {
+      return (
+        a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y
+      );
+    }
+
+    function update() {
+      if (gameState === "playing") {
+        const level = levels[currentLevelIndex];
+
+        levelTimer += 1 / 60;
+
+        // Horizontal auto-run
+        player.x += level.speed;
+
+        // Gravity
+        player.vy += level.gravity;
+        player.y += player.vy;
+
+        // Ground collision
+        if (player.y + player.height >= GROUND_Y) {
+          player.y = GROUND_Y - player.height;
+          player.vy = 0;
+          player.onGround = true;
+        }
+
+        // Camera follows player
+        const targetCam = player.x - 200;
+        cameraX += (targetCam - cameraX) * 0.1;
+
+        // Check spikes
+        for (const spike of level.spikes) {
+          const spikeRect = {
+            x: spike.x - cameraX,
+            y: GROUND_Y - spike.h,
+            width: 35,
+            height: spike.h
+          };
+          const playerRect = {
+            x: player.x - cameraX,
+            y: player.y,
+            width: player.width,
+            height: player.height
+          };
+          if (rectIntersect(playerRect, spikeRect)) {
+            gameState = "dead";
+            showOverlay(gameOverOverlay);
+            break;
+          }
+        }
+
+        // Level complete?
+        if (player.x - 50 > level.length) {
+          gameState = "complete";
+          completeText.textContent = `${level.name} cleared in ${levelTimer.toFixed(1)}s`;
+          showOverlay(completeOverlay);
+        }
+
+        // Fail-safe: if you fall off world
+        if (player.y > HEIGHT + 200) {
+          gameState = "dead";
+          showOverlay(gameOverOverlay);
+        }
+      }
+    }
+
+    function drawBackground(level) {
+      // Gradient background
+      const grd = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+      grd.addColorStop(0, level.bg1);
+      grd.addColorStop(1, level.bg2);
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+      // Stars
+      ctx.fillStyle = "rgba(255,255,255,0.15)";
+      for (let i = 0; i < 40; i++) {
+        const x = (i * 200 - cameraX * 0.2) % (WIDTH + 200) - 100;
+        const y = (i * 83) % (HEIGHT - 200) + 30;
+        ctx.fillRect(x, y, 2, 2);
+      }
+    }
+
+    function drawLevel() {
+      const level = levels[currentLevelIndex];
+
+      drawBackground(level);
+
+      // Ground
+      ctx.fillStyle = level.floorColor;
+      ctx.fillRect(0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y);
+
+      // Spikes
+      ctx.fillStyle = level.spikeColor;
+      for (const spike of level.spikes) {
+        const baseX = spike.x - cameraX;
+        const baseY = GROUND_Y;
+        const spikeWidth = 35;
+        const spikeHeight = spike.h;
+
+        ctx.beginPath();
+        ctx.moveTo(baseX, baseY);
+        ctx.lineTo(baseX + spikeWidth / 2, baseY - spikeHeight);
+        ctx.lineTo(baseX + spikeWidth, baseY);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Finish portal
+      const portalX = level.length - cameraX;
+      const portalWidth = 40;
+      const portalHeight = 90;
+      const portalY = GROUND_Y - portalHeight;
+
+      ctx.save();
+      ctx.translate(portalX + portalWidth / 2, portalY + portalHeight / 2);
+      const pulse = Math.sin(performance.now() / 200) * 0.2 + 1;
+      ctx.scale(pulse, pulse);
+
+      const portalGrad = ctx.createLinearGradient(-portalWidth/2, 0, portalWidth/2, portalHeight);
+      portalGrad.addColorStop(0, "rgba(255,255,255,0.8)");
+      portalGrad.addColorStop(1, level.portalColor);
+      ctx.fillStyle = portalGrad;
+      ctx.fillRect(-portalWidth/2, -portalHeight/2, portalWidth, portalHeight);
+
+      ctx.restore();
+
+      // Player
+      const px = player.x - cameraX;
+      const py = player.y;
+      ctx.save();
+      ctx.translate(px + player.width / 2, py + player.height / 2);
+      const rotation = (player.onGround ? 0 : (player.x / 15) % (Math.PI * 2));
+      ctx.rotate(rotation);
+      ctx.fillStyle = player.color;
+      ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
+      ctx.restore();
+
+      // HUD
+      ctx.fillStyle = "rgba(0,0,0,0.4)";
+      ctx.fillRect(15, 15, 240, 58);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "16px system-ui";
+      ctx.fillText(`Level ${currentLevelIndex + 1}: ${level.name}`, 28, 40);
+
+      const progress = Math.min(player.x / level.length, 1);
+      ctx.fillStyle = "rgba(255,255,255,0.15)";
+      ctx.fillRect(28, 46, 200, 8);
+      ctx.fillStyle = "#00ffc8";
+      ctx.fillRect(28, 46, 200 * progress, 8);
+    }
+
+    function render() {
+      if (gameState === "menu") {
+        // Dimmed background in menu
+        ctx.fillStyle = "#050711";
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+      } else {
+        drawLevel();
+      }
+    }
+
+    function gameLoop() {
+      update();
+      render();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Start in menu
+    showOverlay(menuOverlay);
+    hideOverlay(completeOverlay);
+    hideOverlay(gameOverOverlay);
+    gameLoop();
+  </script>
+</body>
+</html>
