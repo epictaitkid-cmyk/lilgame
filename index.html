@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Passing Through Town – Bloomington Crossy</title>
+  <meta charset="UTF-8">
+  <title>Pixel Casino – Walking Gambler</title>
   <style>
     * {
       box-sizing: border-box;
@@ -24,9 +24,9 @@
       position: relative;
       width: 900px;
       height: 540px;
-      border-radius: 24px;
+      border-radius: 20px;
       overflow: hidden;
-      background: radial-gradient(circle at 20% 0%, #020617, #020617 45%, #000014 100%);
+      background: #020617;
       box-shadow: 0 28px 60px rgba(0,0,0,0.95);
       border: 1px solid rgba(148,163,184,0.4);
     }
@@ -35,154 +35,181 @@
       display: block;
       width: 100%;
       height: 100%;
-      background: #020617;
+      background: radial-gradient(circle at 20% 0%, #020617, #020617 45%, #000014 100%);
     }
 
-    .overlay {
+    #hud {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(148,163,184,0.6);
+      font-size: 13px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      z-index: 4;
+    }
+
+    #hud span.label {
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.09em;
+      opacity: 0.8;
+    }
+
+    #hud span.value {
+      font-weight: 700;
+    }
+
+    #hint {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.88);
+      border: 1px solid rgba(148,163,184,0.5);
+      font-size: 12px;
+      z-index: 3;
+      min-width: 220px;
+      text-align: center;
+      opacity: 0.9;
+    }
+
+    #overlay {
       position: absolute;
       inset: 0;
-      display: flex;
-      flex-direction: column;
+      display: none;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(circle at top, rgba(15,23,42,0.9), rgba(15,23,42,0.98));
-      text-align: center;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      z-index: 5;
+      background: rgba(15,23,42,0.92);
+      z-index: 10;
     }
 
-    .overlay.hidden {
-      display: none !important;
+    #overlay.active {
+      display: flex;
     }
 
-    h1 {
-      font-size: 40px;
+    #overlayInner {
+      width: 360px;
+      max-width: 90%;
+      padding: 18px 20px 16px;
+      border-radius: 16px;
+      background: radial-gradient(circle at top, #020617, #020617 55%, #020617 100%);
+      border: 1px solid rgba(148,163,184,0.7);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.8);
+    }
+
+    #overlayTitle {
+      font-size: 18px;
+      font-weight: 700;
       margin-bottom: 4px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      text-shadow: 0 0 16px rgba(220,38,38,0.9);
     }
 
-    h2 {
-      font-size: 26px;
-      margin-bottom: 6px;
-      text-shadow: 0 0 10px rgba(248,250,252,0.9);
+    #overlaySubtitle {
+      font-size: 12px;
+      opacity: 0.85;
+      margin-bottom: 10px;
     }
 
-    p {
-      opacity: 0.9;
-      margin-bottom: 14px;
+    #overlayContent {
+      font-size: 13px;
+      margin-bottom: 10px;
+      min-height: 60px;
+    }
+
+    .slot-reels {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      margin: 8px 0 10px;
+    }
+
+    .slot-reel {
+      flex: 1;
+      text-align: center;
+      padding: 8px 0;
+      border-radius: 8px;
+      border: 1px solid rgba(148,163,184,0.7);
+      background: radial-gradient(circle at top, #111827, #020617);
+      font-size: 20px;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
     }
 
     button {
       border: none;
-      padding: 10px 20px;
       border-radius: 999px;
-      cursor: pointer;
+      padding: 7px 14px;
+      font-size: 12px;
       font-weight: 600;
-      font-size: 13px;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      background: linear-gradient(135deg,#22c55e,#22d3ee);
+      cursor: pointer;
+      background: linear-gradient(135deg, #22c55e, #22d3ee);
       color: #020617;
-      box-shadow: 0 4px 0 #0f766e, 0 0 14px rgba(45,212,191,0.9);
+      box-shadow: 0 3px 0 #0f766e;
       transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.12s ease;
-      margin-top: 10px;
+    }
+
+    button.secondary {
+      background: rgba(15,23,42,0.9);
+      color: #e5e7eb;
+      border: 1px solid rgba(148,163,184,0.7);
+      box-shadow: none;
     }
 
     button:hover {
-      filter: brightness(1.1);
+      filter: brightness(1.06);
     }
 
     button:active {
       transform: translateY(2px) scale(0.98);
-      box-shadow: 0 2px 0 #0f766e, 0 0 9px rgba(45,212,191,0.9);
+      box-shadow: 0 1px 0 #0f766e;
     }
 
-    .small {
-      padding: 8px 16px;
-      font-size: 11px;
-      margin: 6px;
-    }
-
-    .info {
-      font-size: 12px;
-      opacity: 0.8;
-      max-width: 460px;
+    .bet-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
       margin-bottom: 8px;
     }
 
-    .pill-row {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 6px;
-      margin-top: 8px;
-    }
-
-    .pill {
-      padding: 4px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(148,163,184,0.6);
-      background: rgba(15,23,42,0.9);
+    .bet-buttons button {
+      padding: 6px 10px;
       font-size: 11px;
-      display: inline-flex;
+    }
+
+    .input-row {
+      margin-top: 6px;
+      display: flex;
       align-items: center;
       gap: 6px;
     }
 
-    .dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 999px;
-    }
-
-    .dot-road {
-      background: linear-gradient(135deg,#f97316,#facc15);
-      box-shadow: 0 0 6px rgba(251,191,36,0.9);
-    }
-
-    .dot-water {
-      background: linear-gradient(135deg,#0ea5e9,#22d3ee);
-      box-shadow: 0 0 6px rgba(56,189,248,0.9);
-    }
-
-    .dot-rail {
-      background: linear-gradient(135deg,#f43f5e,#fb7185);
-      box-shadow: 0 0 6px rgba(248,113,113,0.9);
-    }
-
-    .dot-grass {
-      background: linear-gradient(135deg,#22c55e,#4ade80);
-      box-shadow: 0 0 6px rgba(74,222,128,0.9);
-    }
-
-    .score-hud {
-      position: absolute;
-      top: 12px;
-      left: 18px;
-      z-index: 4;
-      padding: 6px 12px;
-      border-radius: 999px;
-      background: rgba(15,23,42,0.8);
-      border: 1px solid rgba(148,163,184,0.6);
+    .input-row input {
+      width: 80px;
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(148,163,184,0.7);
+      background: #020617;
+      color: #e5e7eb;
       font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
     }
 
-    .score-hud span.label {
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
+    .small-text {
+      font-size: 11px;
       opacity: 0.8;
-      font-size: 10px;
-    }
-
-    .score-hud span.value {
-      font-weight: 700;
-      font-size: 13px;
+      margin-top: 4px;
     }
   </style>
 </head>
@@ -190,798 +217,549 @@
   <div id="gameContainer">
     <canvas id="gameCanvas" width="900" height="540"></canvas>
 
-    <div class="score-hud" id="hud">
-      <span class="label">Score</span>
-      <span class="value" id="scoreText">0</span>
-      <span class="label">Best</span>
-      <span class="value" id="bestText">0</span>
+    <div id="hud">
+      <span class="label">Balance</span>
+      <span class="value" id="balanceText">$1000</span>
+      <span class="label">Last Result</span>
+      <span class="value" id="lastResultText">–</span>
     </div>
 
-    <!-- Start Menu -->
-    <div id="startOverlay" class="overlay">
-      <h1>Passing Through Town</h1>
-      <h2>Bloomington, Indiana</h2>
-      <p>Hop past Sample Gates, cross Kirkwood, float the campus river, and dodge trains near the B-Line Trail.</p>
-      <div class="info">
-        Controls: <b>WASD</b> or <b>Arrow keys</b> (<b>↑ / W / Space</b> to hop forward).<br>
-        One hop at a time, like Crossy Road. Survive as long as you can.
-      </div>
-      <div class="pill-row">
-        <div class="pill"><span class="dot dot-grass"></span> Grass: Sample Gates, Dunn Meadow, IU Quad, Bryan Park, B-Line Trail</div>
-        <div class="pill"><span class="dot dot-road"></span> Roads: Kirkwood, College, Walnut, 3rd St – avoid cars</div>
-        <div class="pill"><span class="dot dot-water"></span> Water: Campus river / Griffy – stay on logs</div>
-        <div class="pill"><span class="dot dot-rail"></span> Rail: B-Line style crossing – watch for the train</div>
-      </div>
-      <button id="startButton">Start Hopping</button>
-    </div>
+    <div id="hint">Use WASD / Arrow keys to walk. Find a game and press E to play.</div>
 
-    <!-- Game Over -->
-    <div id="gameOverOverlay" class="overlay hidden">
-      <h2>Trip Cut Short</h2>
-      <p id="gameOverReason">You got hit on College Ave.</p>
-      <p class="info" id="gameOverScore">Score: 0 • Best: 0</p>
-      <div>
-        <button class="small" id="retryButton">Try Again</button>
-        <button class="small" id="menuButton">Back to Menu</button>
+    <!-- Mini-game overlay -->
+    <div id="overlay">
+      <div id="overlayInner">
+        <div id="overlayTitle">Game Title</div>
+        <div id="overlaySubtitle">Subtitle</div>
+        <div id="overlayContent"></div>
+        <div class="btn-row" id="overlayButtons"></div>
       </div>
     </div>
   </div>
 
   <script>
+    // ======== BASIC SETUP ========
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
     const WIDTH = canvas.width;
     const HEIGHT = canvas.height;
-    const CELL = 40;
-    const VISIBLE_LANES = Math.floor(HEIGHT / CELL) + 4;
 
-    const startOverlay = document.getElementById("startOverlay");
-    const gameOverOverlay = document.getElementById("gameOverOverlay");
-    const startButton = document.getElementById("startButton");
-    const retryButton = document.getElementById("retryButton");
-    const menuButton = document.getElementById("menuButton");
-    const gameOverReason = document.getElementById("gameOverReason");
-    const gameOverScore = document.getElementById("gameOverScore");
-    const scoreText = document.getElementById("scoreText");
-    const bestText = document.getElementById("bestText");
+    const balanceText = document.getElementById("balanceText");
+    const lastResultText = document.getElementById("lastResultText");
+    const hintEl = document.getElementById("hint");
 
-    let gameState = "menu";  // "menu" | "playing" | "dead"
-    let lanes = [];
-    let player;
-    let cameraRow = 0;
-    let score = 0;
-    let bestScore = 0;
-    let rngSeed = 42;
+    const overlay = document.getElementById("overlay");
+    const overlayTitle = document.getElementById("overlayTitle");
+    const overlaySubtitle = document.getElementById("overlaySubtitle");
+    const overlayContent = document.getElementById("overlayContent");
+    const overlayButtons = document.getElementById("overlayButtons");
 
-    // Simple PRNG for consistent world
-    function rand() {
-      rngSeed = (rngSeed * 16807) % 2147483647;
-      return (rngSeed - 1) / 2147483646;
+    let balance = 1000;
+    let lastResult = "–";
+
+    function updateHUD() {
+      balanceText.textContent = "$" + balance.toFixed(0);
+      lastResultText.textContent = lastResult;
     }
 
-    const STREETS = [
-      "Kirkwood Ave", "College Ave", "Walnut St", "3rd St", "10th St",
-      "Atwater Ave", "4th St", "Indiana Ave"
+    // ======== WORLD / PLAYER ========
+    const player = {
+      x: WIDTH / 2,
+      y: HEIGHT - 80,
+      size: 20,
+      speed: 200,
+      color: "#22d3ee"
+    };
+
+    const keys = {
+      up: false,
+      down: false,
+      left: false,
+      right: false
+    };
+
+    let gameState = "walking"; // "walking" | "mini"
+
+    // Casino games as stations you walk up to
+    const stations = [
+      {
+        x: WIDTH / 2 - 140,
+        y: HEIGHT / 2 - 60,
+        w: 80,
+        h: 40,
+        type: "slots",
+        label: "Slots"
+      },
+      {
+        x: WIDTH / 2 + 60,
+        y: HEIGHT / 2 - 60,
+        w: 80,
+        h: 40,
+        type: "hilo",
+        label: "Hi–Lo"
+      },
+      {
+        x: WIDTH / 2 - 40,
+        y: HEIGHT / 2 + 80,
+        w: 80,
+        h: 40,
+        type: "reset",
+        label: "Cashier"
+      }
     ];
 
-    const GRASS_SPOTS = [
-      "Sample Gates", "IU Old Crescent", "Dunn Meadow", "IU Quad",
-      "Bryan Park", "Courthouse Square", "B-Line Trail"
-    ];
-
-    const WATER_SPOTS = ["Campus River", "Griffy Lake", "Jordan Creek"];
-    const RAIL_SPOTS = ["B-Line Crossing", "Rail Overpass"];
-
-    function randCarColor() {
-      const colors = [
-        "#e11d48","#f97316","#22c55e","#3b82f6","#a855f7","#eab308","#06b6d4"
-      ];
-      return colors[Math.floor(rand() * colors.length)];
+    function distance(x1,y1,x2,y2){
+      const dx = x1 - x2;
+      const dy = y1 - y2;
+      return Math.sqrt(dx*dx + dy*dy);
     }
 
-    function createLane(rowIndex) {
-      if (rowIndex === 0) {
-        return {
-          type: "grass",
-          label: "Downtown Start",
-          isTrail: false,
-          cars: [],
-          logs: [],
-          train: null,
-          decoSeed: rand()
-        };
+    let nearStation = null;
+
+    // ======== INPUT ========
+    window.addEventListener("keydown", (e) => {
+      if (gameState === "mini") {
+        // When in mini-game, only Esc to exit is handled in overlay buttons
+        return;
       }
 
-      const r = rand();
-      let type;
-      if (rowIndex < 4) {
-        type = "grass";
-      } else if (r < 0.45) {
-        type = "grass";
-      } else if (r < 0.75) {
-        type = "road";
-      } else if (r < 0.9) {
-        type = "water";
-      } else {
-        type = "rail";
-      }
+      if (e.code === "ArrowUp" || e.code === "KeyW") keys.up = true;
+      if (e.code === "ArrowDown" || e.code === "KeyS") keys.down = true;
+      if (e.code === "ArrowLeft" || e.code === "KeyA") keys.left = true;
+      if (e.code === "ArrowRight" || e.code === "KeyD") keys.right = true;
 
-      if (type === "grass") {
-        const isTrail = rand() < 0.2;
-        return {
-          type: "grass",
-          label: isTrail ? "B-Line Trail" : GRASS_SPOTS[Math.floor(rand() * GRASS_SPOTS.length)],
-          isTrail,
-          cars: [],
-          logs: [],
-          train: null,
-          decoSeed: rand()
-        };
-      }
-
-      if (type === "road") {
-        const direction = rand() < 0.5 ? 1 : -1;
-        const speed = 55 + rand() * 65;
-        const carCount = 3 + Math.floor(rand() * 3);
-        const cars = [];
-        for (let i = 0; i < carCount; i++) {
-          const startX = rand() * (WIDTH + 400) - 200;
-          cars.push({
-            x: startX,
-            width: CELL * (1.4 + rand() * 0.6),
-            color: randCarColor()
-          });
+      if (e.code === "KeyE") {
+        // Try to open a station if near one
+        if (nearStation && gameState === "walking") {
+          openStation(nearStation);
         }
-        return {
-          type: "road",
-          label: STREETS[Math.floor(rand() * STREETS.length)],
-          direction,
-          speed,
-          cars,
-          logs: [],
-          train: null,
-          isTrail: false,
-          decoSeed: rand()
-        };
       }
+    });
 
-      if (type === "water") {
-        const direction = rand() < 0.5 ? 1 : -1;
-        const speed = 30 + rand() * 40;
-        const logCount = 3 + Math.floor(rand() * 3);
-        const logs = [];
-        for (let i = 0; i < logCount; i++) {
-          const startX = rand() * (WIDTH + 400) - 200;
-          logs.push({
-            x: startX,
-            width: CELL * (2 + rand() * 1.5)
-          });
+    window.addEventListener("keyup", (e) => {
+      if (e.code === "ArrowUp" || e.code === "KeyW") keys.up = false;
+      if (e.code === "ArrowDown" || e.code === "KeyS") keys.down = false;
+      if (e.code === "ArrowLeft" || e.code === "KeyA") keys.left = false;
+      if (e.code === "ArrowRight" || e.code === "KeyD") keys.right = false;
+    });
+
+    // ======== MINI-GAME OVERLAY HELPER ========
+    function showOverlay() {
+      overlay.classList.add("active");
+      gameState = "mini";
+    }
+
+    function hideOverlay() {
+      overlay.classList.remove("active");
+      gameState = "walking";
+      lastResult = "Back to casino";
+      updateHUD();
+    }
+
+    function clearOverlayButtons() {
+      while (overlayButtons.firstChild) {
+        overlayButtons.removeChild(overlayButtons.firstChild);
+      }
+    }
+
+    function addOverlayButton(text, className, onClick) {
+      const btn = document.createElement("button");
+      btn.textContent = text;
+      if (className) btn.classList.add(className);
+      btn.addEventListener("click", onClick);
+      overlayButtons.appendChild(btn);
+    }
+
+    // ======== STATION HANDLING ========
+    function openStation(station) {
+      if (station.type === "slots") {
+        openSlotsGame();
+      } else if (station.type === "hilo") {
+        openHiLoGame();
+      } else if (station.type === "reset") {
+        openCashier();
+      }
+    }
+
+    // ======== SLOTS GAME ========
+    function openSlotsGame() {
+      overlayTitle.textContent = "Neon Slots";
+      overlaySubtitle.textContent = "Bet fake chips. 3 of a kind wins big. Symbols: 🍒, 🍋, ⭐, 💎";
+      overlayContent.innerHTML = "";
+
+      const reelContainer = document.createElement("div");
+      reelContainer.className = "slot-reels";
+
+      const reel1 = document.createElement("div");
+      const reel2 = document.createElement("div");
+      const reel3 = document.createElement("div");
+      reel1.className = reel2.className = reel3.className = "slot-reel";
+
+      reel1.textContent = "❔";
+      reel2.textContent = "❔";
+      reel3.textContent = "❔";
+
+      reelContainer.appendChild(reel1);
+      reelContainer.appendChild(reel2);
+      reelContainer.appendChild(reel3);
+
+      overlayContent.appendChild(reelContainer);
+
+      const msg = document.createElement("div");
+      msg.className = "small-text";
+      msg.textContent = "Choose a bet & press Spin. This is all fake money – just for fun.";
+      overlayContent.appendChild(msg);
+
+      clearOverlayButtons();
+
+      const betAmounts = [10, 25, 50, 100];
+      let currentBet = 25;
+
+      const betRow = document.createElement("div");
+      betRow.className = "bet-buttons";
+
+      betAmounts.forEach(amount => {
+        const b = document.createElement("button");
+        b.textContent = "$" + amount;
+        b.addEventListener("click", () => {
+          currentBet = amount;
+          msg.textContent = "Bet set to $" + currentBet + ". Press Spin.";
+        });
+        betRow.appendChild(b);
+      });
+
+      overlayContent.appendChild(betRow);
+
+      addOverlayButton("Spin", null, () => {
+        if (balance < currentBet) {
+          msg.textContent = "Not enough fake chips for that bet.";
+          lastResult = "Insufficient chips on Slots";
+          updateHUD();
+          return;
         }
-        return {
-          type: "water",
-          label: WATER_SPOTS[Math.floor(rand() * WATER_SPOTS.length)],
-          direction,
-          speed,
-          cars: [],
-          logs,
-          train: null,
-          isTrail: false,
-          decoSeed: rand()
-        };
+
+        balance -= currentBet;
+
+        const symbols = ["🍒", "🍋", "⭐", "💎"];
+        const r1 = symbols[Math.floor(Math.random() * symbols.length)];
+        const r2 = symbols[Math.floor(Math.random() * symbols.length)];
+        const r3 = symbols[Math.floor(Math.random() * symbols.length)];
+
+        reel1.textContent = r1;
+        reel2.textContent = r2;
+        reel3.textContent = r3;
+
+        let payout = 0;
+        if (r1 === r2 && r2 === r3) {
+          if (r1 === "🍒") payout = currentBet * 5;
+          else if (r1 === "🍋") payout = currentBet * 8;
+          else if (r1 === "⭐") payout = currentBet * 12;
+          else if (r1 === "💎") payout = currentBet * 20;
+        } else if (r1 === r2 || r2 === r3 || r1 === r3) {
+          payout = currentBet * 2;
+        }
+
+        if (payout > 0) {
+          balance += payout;
+          msg.textContent = `You won $${payout} in fake chips!`;
+          lastResult = `Slots +$${payout - currentBet}`;
+        } else {
+          msg.textContent = `No win. You lost $${currentBet}.`;
+          lastResult = `Slots -$${currentBet}`;
+        }
+        updateHUD();
+      });
+
+      addOverlayButton("Back to Floor", "secondary", hideOverlay);
+
+      showOverlay();
+    }
+
+    // ======== HI–LO GAME ========
+    function openHiLoGame() {
+      overlayTitle.textContent = "Hi–Lo Table";
+      overlaySubtitle.textContent = "Bet on whether the next card (1–13) is high (8–13) or low (1–6). 7 is house win.";
+
+      overlayContent.innerHTML = "";
+
+      const status = document.createElement("div");
+      status.textContent = "Place a bet and choose High or Low.";
+      status.style.marginBottom = "6px";
+      overlayContent.appendChild(status);
+
+      const inputRow = document.createElement("div");
+      inputRow.className = "input-row";
+
+      const label = document.createElement("span");
+      label.textContent = "Bet $";
+
+      const betInput = document.createElement("input");
+      betInput.type = "number";
+      betInput.value = "50";
+      betInput.min = "1";
+
+      inputRow.appendChild(label);
+      inputRow.appendChild(betInput);
+      overlayContent.appendChild(inputRow);
+
+      const small = document.createElement("div");
+      small.className = "small-text";
+      small.textContent = "This is fake money only. Win: 2× bet. Lose: lose your bet.";
+      overlayContent.appendChild(small);
+
+      clearOverlayButtons();
+
+      addOverlayButton("Bet High (8–13)", null, () => {
+        playHiLoRound("high");
+      });
+
+      addOverlayButton("Bet Low (1–6)", null, () => {
+        playHiLoRound("low");
+      });
+
+      addOverlayButton("Back to Floor", "secondary", hideOverlay);
+
+      function playHiLoRound(choice) {
+        let bet = parseInt(betInput.value, 10);
+        if (isNaN(bet) || bet <= 0) {
+          status.textContent = "Enter a valid positive bet.";
+          return;
+        }
+        if (balance < bet) {
+          status.textContent = "Not enough fake chips for that bet.";
+          lastResult = "Insufficient chips on Hi–Lo";
+          updateHUD();
+          return;
+        }
+
+        balance -= bet;
+
+        const card = Math.floor(Math.random() * 13) + 1; // 1–13
+        let outcome = "";
+        let payout = 0;
+
+        if (card === 7) {
+          outcome = `Card is 7. House wins. You lose $${bet}.`;
+          lastResult = `Hi–Lo -$${bet}`;
+        } else if (card >= 8 && choice === "high") {
+          payout = bet * 2;
+          balance += payout;
+          outcome = `Card is ${card} (High). You win $${payout}!`;
+          lastResult = `Hi–Lo +$${payout - bet}`;
+        } else if (card <= 6 && choice === "low") {
+          payout = bet * 2;
+          balance += payout;
+          outcome = `Card is ${card} (Low). You win $${payout}!`;
+          lastResult = `Hi–Lo +$${payout - bet}`;
+        } else {
+          outcome = `Card is ${card}. You lose $${bet}.`;
+          lastResult = `Hi–Lo -$${bet}`;
+        }
+
+        status.textContent = outcome;
+        updateHUD();
       }
 
-      if (type === "rail") {
-        const trainSpeed = 240 + rand() * 60;
-        return {
-          type: "rail",
-          label: RAIL_SPOTS[Math.floor(rand() * RAIL_SPOTS.length)],
-          cars: [],
-          logs: [],
-          isTrail: false,
-          decoSeed: rand(),
-          train: {
-            active: false,
-            x: -800,
-            width: 700,
-            speed: trainSpeed,
-            timer: 1 + rand() * 3
-          }
-        };
-      }
+      showOverlay();
     }
 
-    function worldToScreen(row, col) {
-      const y = HEIGHT - (row - cameraRow + 1) * CELL + CELL * 0.2;
-      const x = WIDTH / 2 + col * CELL;
-      return { x, y };
+    // ======== CASHIER (RESET) ========
+    function openCashier() {
+      overlayTitle.textContent = "Cashier";
+      overlaySubtitle.textContent = "Reset your fake chips if you go broke or just want to start over.";
+
+      overlayContent.innerHTML = `
+        <div style="font-size:13px; margin-bottom:6px;">
+          Current balance: <b>$${balance.toFixed(0)}</b>
+        </div>
+        <div class="small-text">
+          This is all pretend money. Use this to refill your chips to keep playing.
+        </div>
+      `;
+
+      clearOverlayButtons();
+
+      addOverlayButton("Reset to $1000", null, () => {
+        balance = 1000;
+        lastResult = "Cashier reset to $1000";
+        updateHUD();
+        hideOverlay();
+      });
+
+      addOverlayButton("Back to Floor", "secondary", hideOverlay);
+
+      showOverlay();
     }
 
-    function resetGame() {
-      rngSeed = Math.floor(Math.random() * 1000000) + 1;
-      lanes = [];
-      for (let i = 0; i < VISIBLE_LANES + 20; i++) {
-        lanes.push(createLane(i));
-      }
-
-      const startPos = worldToScreen(0, 0);
-      player = {
-        gridX: 0,
-        gridY: 0,
-        size: CELL * 0.8,
-        moving: false,
-        moveTime: 0,
-        moveDuration: 0.16,
-        fromX: startPos.x,
-        fromY: startPos.y,
-        toX: startPos.x,
-        toY: startPos.y,
-        drawX: startPos.x,
-        drawY: startPos.y
-      };
-
-      cameraRow = 0;
-      score = 0;
-      updateScoreHUD();
-    }
-
-    function updateScoreHUD() {
-      scoreText.textContent = score;
-      bestText.textContent = bestScore;
-    }
-
-    function showOverlay(el) {
-      el.classList.remove("hidden");
-    }
-
-    function hideOverlay(el) {
-      el.classList.add("hidden");
-    }
-
-    // Input / movement
-    function tryMove(dx, dy) {
-      if (player.moving) return;
-
-      const newX = player.gridX + dx;
-      const newY = player.gridY + dy;
-
-      // horizontal bounds similar-ish to Crossy Road feel
-      if (newX < -6 || newX > 6) return;
-      if (newY < 0) return;
-
-      while (newY + 20 > lanes.length) {
-        lanes.push(createLane(lanes.length));
-      }
-
-      player.gridX = newX;
-      player.gridY = newY;
-
-      const fromPos = { x: player.drawX, y: player.drawY };
-      const toPos = worldToScreen(player.gridY, player.gridX);
-
-      player.fromX = fromPos.x;
-      player.fromY = fromPos.y;
-      player.toX = toPos.x;
-      player.toY = toPos.y;
-      player.moveTime = 0;
-      player.moving = true;
-
-      score = Math.max(score, player.gridY);
-      if (score > bestScore) bestScore = score;
-      updateScoreHUD();
-    }
-
-    function onKeyDown(e) {
-      if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","KeyW","KeyA","KeyS","KeyD","Space"].includes(e.code)) {
-        e.preventDefault();
-      }
-
-      if (gameState === "menu") return;
-      if (gameState !== "playing") return;
-
-      if (e.code === "ArrowUp" || e.code === "KeyW" || e.code === "Space") {
-        tryMove(0, 1);
-      } else if (e.code === "ArrowDown" || e.code === "KeyS") {
-        tryMove(0, -1);
-      } else if (e.code === "ArrowLeft" || e.code === "KeyA") {
-        tryMove(-1, 0);
-      } else if (e.code === "ArrowRight" || e.code === "KeyD") {
-        tryMove(1, 0);
-      }
-    }
-
-    function onKeyUp(e) {
-      if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","KeyW","KeyA","KeyS","KeyD","Space"].includes(e.code)) {
-        e.preventDefault();
-      }
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
-
-    canvas.addEventListener("mousedown", () => {
-      if (gameState === "playing") {
-        tryMove(0, 1);
-      }
-    });
-
-    // Buttons
-    startButton.addEventListener("click", () => {
-      hideOverlay(startOverlay);
-      gameState = "playing";
-      resetGame();
-    });
-
-    retryButton.addEventListener("click", () => {
-      hideOverlay(gameOverOverlay);
-      gameState = "playing";
-      resetGame();
-    });
-
-    menuButton.addEventListener("click", () => {
-      hideOverlay(gameOverOverlay);
-      showOverlay(startOverlay);
-      gameState = "menu";
-    });
-
-    // Game loop
+    // ======== UPDATE / DRAW ========
     let lastTime = performance.now();
 
-    function loop(time) {
-      const dt = Math.min((time - lastTime) / 1000, 0.05);
-      lastTime = time;
+    function gameLoop(now) {
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
 
-      if (gameState === "playing") {
+      if (gameState === "walking") {
         update(dt);
       }
 
       render();
-      requestAnimationFrame(loop);
+      requestAnimationFrame(gameLoop);
     }
 
     function update(dt) {
-      updatePlayer(dt);
-      updateWorld(dt);
-      checkHazards();
-      updateCamera(dt);
-    }
+      let dx = 0;
+      let dy = 0;
+      if (keys.up) dy -= 1;
+      if (keys.down) dy += 1;
+      if (keys.left) dx -= 1;
+      if (keys.right) dx += 1;
 
-    function updatePlayer(dt) {
-      if (!player.moving) {
-        const p = worldToScreen(player.gridY, player.gridX);
-        player.drawX = p.x;
-        player.drawY = p.y;
-        return;
+      const length = Math.sqrt(dx*dx + dy*dy);
+      if (length > 0) {
+        dx /= length;
+        dy /= length;
       }
 
-      player.moveTime += dt;
-      let t = player.moveTime / player.moveDuration;
-      if (t >= 1) {
-        t = 1;
-        player.moving = false;
-      }
+      player.x += dx * player.speed * dt;
+      player.y += dy * player.speed * dt;
 
-      const lerp = (a, b, u) => a + (b - a) * u;
-      const baseX = lerp(player.fromX, player.toX, t);
-      const baseY = lerp(player.fromY, player.toY, t);
+      // Boundaries of casino floor
+      const margin = 40;
+      if (player.x < margin) player.x = margin;
+      if (player.x > WIDTH - margin) player.x = WIDTH - margin;
+      if (player.y < margin + 20) player.y = margin + 20;
+      if (player.y > HEIGHT - margin) player.y = HEIGHT - margin;
 
-      const hopH = CELL * 0.5;
-      const hop = Math.sin(t * Math.PI) * hopH;
-
-      player.drawX = baseX;
-      player.drawY = baseY - hop;
-    }
-
-    function updateWorld(dt) {
-      for (let i = 0; i < lanes.length; i++) {
-        const lane = lanes[i];
-
-        if (lane.type === "road") {
-          const dir = lane.direction;
-          for (const car of lane.cars) {
-            car.x += dir * lane.speed * dt;
-            if (dir === 1 && car.x > WIDTH + 200) {
-              car.x = -240 - rand() * 200;
-              car.width = CELL * (1.4 + rand() * 0.6);
-              car.color = randCarColor();
-            } else if (dir === -1 && car.x < -240) {
-              car.x = WIDTH + 240 + rand() * 200;
-              car.width = CELL * (1.4 + rand() * 0.6);
-              car.color = randCarColor();
-            }
-          }
+      // Check proximity to stations
+      nearStation = null;
+      let minDist = 50;
+      stations.forEach(st => {
+        const cx = st.x + st.w / 2;
+        const cy = st.y + st.h / 2;
+        const d = distance(player.x, player.y, cx, cy);
+        if (d < minDist) {
+          minDist = d;
+          nearStation = st;
         }
+      });
 
-        if (lane.type === "water") {
-          const dir = lane.direction;
-          for (const log of lane.logs) {
-            log.x += dir * lane.speed * dt;
-            if (dir === 1 && log.x > WIDTH + 260) {
-              log.x = -320 - rand() * 200;
-            } else if (dir === -1 && log.x < -320) {
-              log.x = WIDTH + 260 + rand() * 200;
-            }
-          }
-        }
-
-        if (lane.type === "rail" && lane.train) {
-          const tr = lane.train;
-          tr.timer -= dt;
-          if (!tr.active && tr.timer <= 0) {
-            tr.active = true;
-            tr.x = -tr.width - 200;
-          }
-          if (tr.active) {
-            tr.x += tr.speed * dt;
-            if (tr.x > WIDTH + 400) {
-              tr.active = false;
-              tr.timer = 3 + rand() * 4;
-            }
-          }
-        }
-      }
-    }
-
-    function checkHazards() {
-      const rowIndex = player.gridY;
-      if (rowIndex < 0 || rowIndex >= lanes.length) return;
-      const lane = lanes[rowIndex];
-
-      const px = WIDTH / 2 + player.gridX * CELL;
-      const py = HEIGHT - (rowIndex - cameraRow + 1) * CELL + CELL * 0.2;
-      const half = player.size * 0.5;
-
-      if (lane.type === "grass") return;
-
-      if (lane.type === "road") {
-        for (const car of lane.cars) {
-          const carX = car.x;
-          const carW = car.width;
-          const carY = HEIGHT - (rowIndex - cameraRow + 1) * CELL + CELL * 0.2;
-          const carH = CELL * 0.7;
-
-          const overlapX = Math.abs(px - (carX + carW / 2)) < (half + carW / 2 - 4);
-          const overlapY = Math.abs(py - (carY + carH / 2)) < (half + carH / 2 - 4);
-          if (overlapX && overlapY) {
-            triggerDeath("You were clipped by a car on " + lane.label + ".");
-            return;
-          }
-        }
-      } else if (lane.type === "water") {
-        let onLog = false;
-        for (const log of lane.logs) {
-          const logX = log.x;
-          const logW = log.width;
-          if (px > logX - 4 && px < logX + logW + 4) {
-            onLog = true;
-          }
-        }
-        if (!onLog) {
-          triggerDeath("You slipped into " + lane.label + ".");
-          return;
-        }
-      } else if (lane.type === "rail") {
-        const tr = lane.train;
-        if (tr && tr.active) {
-          const trainX = tr.x;
-          const trainW = tr.width;
-          if (px > trainX && px < trainX + trainW) {
-            triggerDeath("The train at " + lane.label + " arrived a bit too soon.");
-            return;
-          }
-        }
-      }
-    }
-
-    function triggerDeath(reason) {
-      gameState = "dead";
-      gameOverReason.textContent = reason;
-      gameOverScore.textContent = `Score: ${score} • Best: ${bestScore}`;
-      showOverlay(gameOverOverlay);
-    }
-
-    function updateCamera(dt) {
-      const target = player.gridY - 3;
-      const alpha = 0.1;
-      cameraRow += (target - cameraRow) * alpha;
-    }
-
-    function drawBackground() {
-      // Gradient sky
-      const grad = ctx.createLinearGradient(0, 0, 0, HEIGHT);
-      grad.addColorStop(0, "#020617");
-      grad.addColorStop(0.3, "#020617");
-      grad.addColorStop(1, "#000");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-      // Simple skyline / Sample Gates-ish silhouette
-      ctx.save();
-      ctx.translate(0, HEIGHT * 0.25);
-      ctx.fillStyle = "rgba(15,23,42,0.95)";
-      ctx.beginPath();
-      ctx.moveTo(80, 80);
-      ctx.lineTo(130, 20);
-      ctx.lineTo(180, 80);
-      ctx.lineTo(200, 80);
-      ctx.lineTo(220, 25);
-      ctx.lineTo(240, 80);
-      ctx.lineTo(260, 80);
-      ctx.lineTo(280, 25);
-      ctx.lineTo(300, 80);
-      ctx.lineTo(400, 80);
-      ctx.lineTo(420, 35);
-      ctx.lineTo(440, 80);
-      ctx.lineTo(520, 80);
-      ctx.lineTo(540, 28);
-      ctx.lineTo(560, 80);
-      ctx.lineTo(640, 80);
-      ctx.lineTo(670, 35);
-      ctx.lineTo(700, 80);
-      ctx.lineTo(820, 80);
-      ctx.lineTo(820, 140);
-      ctx.lineTo(80, 140);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-
-      // Crimson glow
-      const g2 = ctx.createRadialGradient(WIDTH * 0.2, HEIGHT * 0.1, 10, WIDTH * 0.2, HEIGHT * 0.1, 260);
-      g2.addColorStop(0, "rgba(248,113,113,0.4)");
-      g2.addColorStop(1, "transparent");
-      ctx.fillStyle = g2;
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    }
-
-    function drawLane(rowIndex) {
-      const lane = lanes[rowIndex];
-      if (!lane) return;
-
-      const top = HEIGHT - (rowIndex - cameraRow + 1) * CELL;
-      const bottom = top + CELL;
-      if (bottom < -CELL || top > HEIGHT + CELL) return;
-
-      // Base color
-      if (lane.type === "grass") {
-        ctx.fillStyle = lane.isTrail ? "#065f46" : "#14532d";
-      } else if (lane.type === "road") {
-        ctx.fillStyle = "#111827";
-      } else if (lane.type === "water") {
-        ctx.fillStyle = "#0b3a5a";
-      } else {
-        ctx.fillStyle = "#1f2937";
-      }
-      ctx.fillRect(0, top, WIDTH, CELL);
-
-      if (lane.type === "grass") {
-        drawGrassDecor(rowIndex, lane, top, bottom);
-      } else if (lane.type === "road") {
-        drawRoadDecor(rowIndex, lane, top, bottom);
-      } else if (lane.type === "water") {
-        drawWaterDecor(rowIndex, lane, top, bottom);
-      } else if (lane.type === "rail") {
-        drawRailDecor(rowIndex, lane, top, bottom);
-      }
-
-      // Lane label plaque
-      ctx.fillStyle = "rgba(15,23,42,0.85)";
-      ctx.fillRect(10, top + 4, 180, 18);
-      ctx.fillStyle = "rgba(248,250,252,0.9)";
-      ctx.font = "10px system-ui";
-      ctx.fillText(lane.label, 16, top + 17);
-    }
-
-    function drawGrassDecor(rowIndex, lane, top, bottom) {
-      // bushes / trees
-      const seed = lane.decoSeed;
-      const count = 4;
-      for (let i = 0; i < count; i++) {
-        const rx = (i + seed * 5) * 190 % (WIDTH + 60) - 30;
-        ctx.fillStyle = lane.isTrail ? "#047857" : "#166534";
-        ctx.beginPath();
-        ctx.arc(rx, bottom - 10, 10, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "#4ade80";
-        ctx.beginPath();
-        ctx.arc(rx - 2, bottom - 12, 6, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // B-Line asphalt path
-      if (lane.isTrail) {
-        const mid = (top + bottom) / 2;
-        ctx.fillStyle = "#020617";
-        ctx.fillRect(0, mid - 6, WIDTH, 12);
-        ctx.strokeStyle = "rgba(248,250,252,0.4)";
-        ctx.lineWidth = 2;
-        ctx.setLineDash([16, 8]);
-        ctx.beginPath();
-        ctx.moveTo(0, mid);
-        ctx.lineTo(WIDTH, mid);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-
-      // IU banner every few rows
-      if (!lane.isTrail && rowIndex % 9 === 0) {
-        const bx = WIDTH - 70;
-        const by = top + 4;
-        ctx.fillStyle = "#7f1d1d";
-        ctx.fillRect(bx, by, 50, CELL - 16);
-        ctx.fillStyle = "#fef2f2";
-        ctx.font = "bold 16px system-ui";
-        ctx.fillText("IU", bx + 10, by + 24);
-      }
-    }
-
-    function drawRoadDecor(rowIndex, lane, top, bottom) {
-      // dashed center line
-      ctx.strokeStyle = "rgba(249,250,251,0.7)";
-      ctx.lineWidth = 2;
-      ctx.setLineDash([20, 16]);
-      ctx.beginPath();
-      ctx.moveTo(0, (top + bottom) / 2);
-      ctx.lineTo(WIDTH, (top + bottom) / 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // cars
-      for (const car of lane.cars) {
-        const y = top + CELL * 0.15;
-        const h = CELL * 0.7;
-
-        // shadow
-        ctx.fillStyle = "rgba(15,23,42,0.7)";
-        ctx.fillRect(car.x + 3, y + h * 0.5, car.width - 6, h * 0.3);
-
-        ctx.fillStyle = car.color;
-        ctx.fillRect(car.x, y, car.width, h);
-
-        // windows
-        ctx.fillStyle = "rgba(15,23,42,0.9)";
-        ctx.fillRect(car.x + 6, y + 6, car.width - 12, h * 0.5 - 6);
-
-        // headlights
-        ctx.fillStyle = "#fef9c3";
-        if (lane.direction === 1) {
-          ctx.fillRect(car.x + car.width - 6, y + 10, 4, 6);
-          ctx.fillRect(car.x + car.width - 6, y + h - 16, 4, 6);
+      if (nearStation) {
+        let name = nearStation.label;
+        if (nearStation.type === "reset") {
+          hintEl.textContent = `Press E to talk to the ${name} (reset fake chips).`;
         } else {
-          ctx.fillRect(car.x + 2, y + 10, 4, 6);
-          ctx.fillRect(car.x + 2, y + h - 16, 4, 6);
+          hintEl.textContent = `Press E to play ${name}.`;
         }
+      } else {
+        hintEl.textContent = "Use WASD / Arrow keys to walk. Find a table and press E to play.";
       }
     }
 
-    function drawWaterDecor(rowIndex, lane, top, bottom) {
-      // wave line
-      ctx.strokeStyle = "rgba(248,250,252,0.25)";
-      ctx.lineWidth = 1.2;
-      const mid = (top + bottom) / 2;
-      ctx.beginPath();
-      for (let x = 0; x <= WIDTH; x += 14) {
-        const y = mid + Math.sin((x + rowIndex * 37) / 25) * 4;
-        ctx.lineTo(x, y);
+    function render() {
+      // Background floor
+      ctx.clearRect(0,0,WIDTH,HEIGHT);
+
+      // Carpet pattern
+      const grad = ctx.createLinearGradient(0,0,WIDTH,HEIGHT);
+      grad.addColorStop(0,"#020617");
+      grad.addColorStop(1,"#020617");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0,0,WIDTH,HEIGHT);
+
+      // Soft grid to feel like floor
+      ctx.strokeStyle = "rgba(15,23,42,0.5)";
+      ctx.lineWidth = 1;
+      const cellSize = 40;
+      for (let x=0; x<WIDTH; x+=cellSize) {
+        ctx.beginPath();
+        ctx.moveTo(x,0);
+        ctx.lineTo(x,HEIGHT);
+        ctx.stroke();
       }
-      ctx.stroke();
-
-      // logs
-      for (const log of lane.logs) {
-        const y = top + CELL * 0.15;
-        const h = CELL * 0.7;
-
-        ctx.fillStyle = "#92400e";
-        ctx.fillRect(log.x, y, log.width, h);
-        ctx.fillStyle = "#fbbf24";
-        ctx.fillRect(log.x + 6, y + h / 2 - 3, log.width - 12, 6);
-      }
-    }
-
-    function drawRailDecor(rowIndex, lane, top, bottom) {
-      ctx.fillStyle = "#0f172a";
-      ctx.fillRect(0, top, WIDTH, CELL);
-
-      // ties
-      ctx.fillStyle = "#111827";
-      for (let x = -20; x < WIDTH + 20; x += 30) {
-        ctx.fillRect(x, top + CELL * 0.1, 16, CELL * 0.8);
+      for (let y=0; y<HEIGHT; y+=cellSize) {
+        ctx.beginPath();
+        ctx.moveTo(0,y);
+        ctx.lineTo(WIDTH,y);
+        ctx.stroke();
       }
 
-      // rails
-      ctx.fillStyle = "#9ca3af";
-      ctx.fillRect(0, top + CELL * 0.25, WIDTH, 4);
-      ctx.fillRect(0, top + CELL * 0.75, WIDTH, 4);
+      // Walls
+      ctx.fillStyle = "#020617";
+      ctx.fillRect(0,0,WIDTH,26);
+      ctx.fillRect(0,HEIGHT-26,WIDTH,26);
+      ctx.fillRect(0,0,26,HEIGHT);
+      ctx.fillRect(WIDTH-26,0,26,HEIGHT);
 
-      const tr = lane.train;
-      if (tr && tr.active) {
-        const trainY = top + CELL * 0.18;
-        const trainH = CELL * 0.75;
+      // Stations (tables / machines)
+      stations.forEach(st => {
+        let color = "#1f2937";
+        if (st.type === "slots") color = "#4c1d95";
+        if (st.type === "hilo") color = "#075985";
+        if (st.type === "reset") color = "#14532d";
 
-        ctx.fillStyle = "#f97316";
-        ctx.fillRect(tr.x, trainY, tr.width, trainH);
+        ctx.fillStyle = color;
+        ctx.fillRect(st.x, st.y, st.w, st.h);
 
-        // windows
-        ctx.fillStyle = "#0f172a";
-        const windows = 6;
-        const spacing = tr.width / (windows + 1);
-        for (let i = 1; i <= windows; i++) {
-          const wx = tr.x + spacing * i - 10;
-          ctx.fillRect(wx, trainY + 10, 20, trainH - 20);
-        }
-      }
-    }
+        ctx.strokeStyle = "rgba(248,250,252,0.6)";
+        ctx.strokeRect(st.x, st.y, st.w, st.h);
 
-    function drawPlayer() {
-      if (!player) return;
-      const x = player.drawX;
-      const y = player.drawY;
-      const size = player.size;
+        // Label
+        ctx.fillStyle = "rgba(248,250,252,0.9)";
+        ctx.font = "12px system-ui";
+        ctx.textAlign = "center";
+        ctx.fillText(st.label, st.x + st.w / 2, st.y - 6);
+      });
 
-      // shadow
-      const row = player.gridY;
-      const shadowY = HEIGHT - (row - cameraRow + 1) * CELL + CELL * 0.25;
+      // Player
+      // Shadow
       ctx.fillStyle = "rgba(15,23,42,0.7)";
       ctx.beginPath();
-      ctx.arc(x, shadowY, size * 0.4, 0, Math.PI * 2);
+      ctx.arc(player.x, player.y + player.size/2, player.size*0.5, 0, Math.PI*2);
       ctx.fill();
 
-      // body
-      ctx.fillStyle = "#22d3ee";
-      ctx.fillRect(x - size / 2, y - size / 2, size, size);
+      // Body
+      ctx.fillStyle = player.color;
+      ctx.fillRect(
+        player.x - player.size/2,
+        player.y - player.size/2,
+        player.size,
+        player.size
+      );
 
-      // outline
+      // Outline
       ctx.strokeStyle = "rgba(15,23,42,0.95)";
       ctx.lineWidth = 2;
-      ctx.strokeRect(x - size / 2, y - size / 2, size, size);
+      ctx.strokeRect(
+        player.x - player.size/2,
+        player.y - player.size/2,
+        player.size,
+        player.size
+      );
 
-      // face square
-      const inner = size * 0.55;
+      // Face
+      const inner = player.size * 0.55;
       ctx.fillStyle = "rgba(15,23,42,0.9)";
-      ctx.fillRect(x - inner / 2, y - inner / 2, inner, inner);
+      ctx.fillRect(
+        player.x - inner/2,
+        player.y - inner/2,
+        inner,
+        inner
+      );
 
-      // eyes
+      // Eyes
       ctx.fillStyle = "#e5e7eb";
       const eyeOffset = inner * 0.18;
       const eyeSize = 3;
       ctx.beginPath();
-      ctx.arc(x - eyeOffset, y - eyeOffset, eyeSize, 0, Math.PI * 2);
-      ctx.arc(x + eyeOffset, y - eyeOffset, eyeSize, 0, Math.PI * 2);
+      ctx.arc(player.x - eyeOffset, player.y - eyeOffset, eyeSize, 0, Math.PI*2);
+      ctx.arc(player.x + eyeOffset, player.y - eyeOffset, eyeSize, 0, Math.PI*2);
       ctx.fill();
     }
 
-    function render() {
-      drawBackground();
-
-      const firstRow = Math.floor(cameraRow) - 2;
-      const lastRow = Math.floor(cameraRow) + VISIBLE_LANES + 2;
-      for (let row = firstRow; row <= lastRow; row++) {
-        if (row >= 0 && row < lanes.length) {
-          drawLane(row);
-        }
-      }
-
-      if (gameState !== "menu") {
-        drawPlayer();
-      }
-    }
-
-    // Death + camera
-    function triggerDeath(reason) {
-      gameState = "dead";
-      gameOverReason.textContent = reason;
-      gameOverScore.textContent = `Score: ${score} • Best: ${bestScore}`;
-      showOverlay(gameOverOverlay);
-    }
-
-    function updateCamera(dt) {
-      const target = player.gridY - 3;
-      const alpha = 0.15;
-      cameraRow += (target - cameraRow) * alpha;
-    }
-
-    // Init
-    resetGame();
-    requestAnimationFrame(loop);
+    // ======== START ========
+    updateHUD();
+    requestAnimationFrame(gameLoop);
   </script>
 </body>
 </html>
