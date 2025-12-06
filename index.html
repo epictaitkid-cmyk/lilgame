@@ -95,7 +95,7 @@
     }
 
     #overlayInner {
-      width: 360px;
+      width: 380px;
       max-width: 90%;
       padding: 18px 20px 16px;
       border-radius: 16px;
@@ -119,13 +119,13 @@
     #overlayContent {
       font-size: 13px;
       margin-bottom: 10px;
-      min-height: 60px;
+      min-height: 70px;
     }
 
     .slot-reels {
       display: flex;
       justify-content: center;
-      gap: 4px;
+      gap: 6px;
       margin: 8px 0 10px;
     }
 
@@ -136,7 +136,7 @@
       border-radius: 8px;
       border: 1px solid rgba(148,163,184,0.7);
       background: radial-gradient(circle at top, #111827, #020617);
-      font-size: 20px;
+      font-size: 22px;
     }
 
     .btn-row {
@@ -206,10 +206,50 @@
       font-size: 12px;
     }
 
+    .input-row input.big {
+      width: 100px;
+    }
+
     .small-text {
       font-size: 11px;
       opacity: 0.8;
       margin-top: 4px;
+    }
+
+    .card-display {
+      width: 70px;
+      height: 90px;
+      border-radius: 8px;
+      border: 1px solid rgba(148,163,184,0.8);
+      background: #020617;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin: 4px 0 8px;
+    }
+
+    .roulette-wrapper {
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .roulette-wheel {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 4px solid rgba(148,163,184,0.8);
+      margin: 4px auto 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      background: radial-gradient(circle at 20% 0%, #0f172a, #020617 60%, #000);
+    }
+
+    .roulette-number-text {
+      font-size: 11px;
+      opacity: 0.85;
     }
   </style>
 </head>
@@ -281,19 +321,19 @@
 
     let gameState = "walking"; // "walking" | "mini"
 
-    // Casino games as stations you walk up to
+    // Stations: Slots, Hi-Lo, Roulette, Cashier
     const stations = [
       {
-        x: WIDTH / 2 - 140,
-        y: HEIGHT / 2 - 60,
+        x: WIDTH / 2 - 180,
+        y: HEIGHT / 2 - 70,
         w: 80,
         h: 40,
         type: "slots",
         label: "Slots"
       },
       {
-        x: WIDTH / 2 + 60,
-        y: HEIGHT / 2 - 60,
+        x: WIDTH / 2 + 100,
+        y: HEIGHT / 2 - 70,
         w: 80,
         h: 40,
         type: "hilo",
@@ -301,7 +341,15 @@
       },
       {
         x: WIDTH / 2 - 40,
-        y: HEIGHT / 2 + 80,
+        y: HEIGHT / 2 - 160,
+        w: 80,
+        h: 40,
+        type: "roulette",
+        label: "Roulette"
+      },
+      {
+        x: WIDTH / 2 - 40,
+        y: HEIGHT / 2 + 90,
         w: 80,
         h: 40,
         type: "reset",
@@ -309,10 +357,10 @@
       }
     ];
 
-    function distance(x1,y1,x2,y2){
+    function distance(x1, y1, x2, y2) {
       const dx = x1 - x2;
       const dy = y1 - y2;
-      return Math.sqrt(dx*dx + dy*dy);
+      return Math.sqrt(dx * dx + dy * dy);
     }
 
     let nearStation = null;
@@ -320,7 +368,6 @@
     // ======== INPUT ========
     window.addEventListener("keydown", (e) => {
       if (gameState === "mini") {
-        // When in mini-game, only Esc to exit is handled in overlay buttons
         return;
       }
 
@@ -330,7 +377,6 @@
       if (e.code === "ArrowRight" || e.code === "KeyD") keys.right = true;
 
       if (e.code === "KeyE") {
-        // Try to open a station if near one
         if (nearStation && gameState === "walking") {
           openStation(nearStation);
         }
@@ -344,7 +390,7 @@
       if (e.code === "ArrowRight" || e.code === "KeyD") keys.right = false;
     });
 
-    // ======== MINI-GAME OVERLAY HELPER ========
+    // ======== MINI-GAME OVERLAY HELPERS ========
     function showOverlay() {
       overlay.classList.add("active");
       gameState = "mini";
@@ -371,21 +417,24 @@
       overlayButtons.appendChild(btn);
     }
 
-    // ======== STATION HANDLING ========
+    // ======== STATION HANDLER ========
     function openStation(station) {
       if (station.type === "slots") {
         openSlotsGame();
       } else if (station.type === "hilo") {
         openHiLoGame();
+      } else if (station.type === "roulette") {
+        openRouletteGame();
       } else if (station.type === "reset") {
         openCashier();
       }
     }
 
-    // ======== SLOTS GAME ========
+    // ======== SLOTS GAME (with SPIN ANIMATION) ========
     function openSlotsGame() {
       overlayTitle.textContent = "Neon Slots";
-      overlaySubtitle.textContent = "Bet fake chips. 3 of a kind wins big. Symbols: 🍒, 🍋, ⭐, 💎";
+      overlaySubtitle.textContent = "3 reels. 3 of a kind wins big. All fake chips.";
+
       overlayContent.innerHTML = "";
 
       const reelContainer = document.createElement("div");
@@ -403,21 +452,19 @@
       reelContainer.appendChild(reel1);
       reelContainer.appendChild(reel2);
       reelContainer.appendChild(reel3);
-
       overlayContent.appendChild(reelContainer);
 
       const msg = document.createElement("div");
       msg.className = "small-text";
-      msg.textContent = "Choose a bet & press Spin. This is all fake money – just for fun.";
+      msg.textContent = "Choose a bet & press Spin. This is all fake money.";
       overlayContent.appendChild(msg);
 
       clearOverlayButtons();
 
-      const betAmounts = [10, 25, 50, 100];
-      let currentBet = 25;
-
       const betRow = document.createElement("div");
       betRow.className = "bet-buttons";
+      const betAmounts = [10, 25, 50, 100];
+      let currentBet = 25;
 
       betAmounts.forEach(amount => {
         const b = document.createElement("button");
@@ -431,7 +478,16 @@
 
       overlayContent.appendChild(betRow);
 
+      let spinning = false;
+      const symbols = ["🍒","🍋","⭐","💎"];
+
+      function randomSymbol() {
+        return symbols[Math.floor(Math.random() * symbols.length)];
+      }
+
       addOverlayButton("Spin", null, () => {
+        if (spinning) return;
+
         if (balance < currentBet) {
           msg.textContent = "Not enough fake chips for that bet.";
           lastResult = "Insufficient chips on Slots";
@@ -440,35 +496,57 @@
         }
 
         balance -= currentBet;
-
-        const symbols = ["🍒", "🍋", "⭐", "💎"];
-        const r1 = symbols[Math.floor(Math.random() * symbols.length)];
-        const r2 = symbols[Math.floor(Math.random() * symbols.length)];
-        const r3 = symbols[Math.floor(Math.random() * symbols.length)];
-
-        reel1.textContent = r1;
-        reel2.textContent = r2;
-        reel3.textContent = r3;
-
-        let payout = 0;
-        if (r1 === r2 && r2 === r3) {
-          if (r1 === "🍒") payout = currentBet * 5;
-          else if (r1 === "🍋") payout = currentBet * 8;
-          else if (r1 === "⭐") payout = currentBet * 12;
-          else if (r1 === "💎") payout = currentBet * 20;
-        } else if (r1 === r2 || r2 === r3 || r1 === r3) {
-          payout = currentBet * 2;
-        }
-
-        if (payout > 0) {
-          balance += payout;
-          msg.textContent = `You won $${payout} in fake chips!`;
-          lastResult = `Slots +$${payout - currentBet}`;
-        } else {
-          msg.textContent = `No win. You lost $${currentBet}.`;
-          lastResult = `Slots -$${currentBet}`;
-        }
         updateHUD();
+
+        spinning = true;
+        msg.textContent = "Spinning...";
+
+        const spinDuration = 900; // ms
+        const startTime = performance.now();
+
+        function spinFrame(now) {
+          const t = now - startTime;
+
+          // Just flick through random symbols
+          reel1.textContent = randomSymbol();
+          reel2.textContent = randomSymbol();
+          reel3.textContent = randomSymbol();
+
+          if (t < spinDuration) {
+            requestAnimationFrame(spinFrame);
+          } else {
+            // Final result
+            const r1 = randomSymbol();
+            const r2 = randomSymbol();
+            const r3 = randomSymbol();
+            reel1.textContent = r1;
+            reel2.textContent = r2;
+            reel3.textContent = r3;
+
+            let payout = 0;
+            if (r1 === r2 && r2 === r3) {
+              if (r1 === "🍒") payout = currentBet * 5;
+              else if (r1 === "🍋") payout = currentBet * 8;
+              else if (r1 === "⭐") payout = currentBet * 12;
+              else if (r1 === "💎") payout = currentBet * 20;
+            } else if (r1 === r2 || r2 === r3 || r1 === r3) {
+              payout = currentBet * 2;
+            }
+
+            if (payout > 0) {
+              balance += payout;
+              msg.textContent = `You won $${payout} in fake chips!`;
+              lastResult = `Slots +$${payout - currentBet}`;
+            } else {
+              msg.textContent = `No win. You lost $${currentBet}.`;
+              lastResult = `Slots -$${currentBet}`;
+            }
+            updateHUD();
+            spinning = false;
+          }
+        }
+
+        requestAnimationFrame(spinFrame);
       });
 
       addOverlayButton("Back to Floor", "secondary", hideOverlay);
@@ -476,10 +554,10 @@
       showOverlay();
     }
 
-    // ======== HI–LO GAME ========
+    // ======== HI–LO GAME (showing a CARD) ========
     function openHiLoGame() {
       overlayTitle.textContent = "Hi–Lo Table";
-      overlaySubtitle.textContent = "Bet on whether the next card (1–13) is high (8–13) or low (1–6). 7 is house win.";
+      overlaySubtitle.textContent = "Bet on whether the card (A–K) is high (8–K) or low (2–6). 7 is house win.";
 
       overlayContent.innerHTML = "";
 
@@ -487,6 +565,11 @@
       status.textContent = "Place a bet and choose High or Low.";
       status.style.marginBottom = "6px";
       overlayContent.appendChild(status);
+
+      const cardDisplay = document.createElement("div");
+      cardDisplay.className = "card-display";
+      cardDisplay.textContent = "🂠";
+      overlayContent.appendChild(cardDisplay);
 
       const inputRow = document.createElement("div");
       inputRow.className = "input-row";
@@ -505,20 +588,18 @@
 
       const small = document.createElement("div");
       small.className = "small-text";
-      small.textContent = "This is fake money only. Win: 2× bet. Lose: lose your bet.";
+      small.textContent = "Purely fake money. Win: 2× bet. Lose: lose your bet.";
       overlayContent.appendChild(small);
 
       clearOverlayButtons();
 
-      addOverlayButton("Bet High (8–13)", null, () => {
-        playHiLoRound("high");
-      });
-
-      addOverlayButton("Bet Low (1–6)", null, () => {
-        playHiLoRound("low");
-      });
-
-      addOverlayButton("Back to Floor", "secondary", hideOverlay);
+      function valueToRank(v) {
+        if (v === 1) return "A";
+        if (v === 11) return "J";
+        if (v === 12) return "Q";
+        if (v === 13) return "K";
+        return String(v);
+      }
 
       function playHiLoRound(choice) {
         let bet = parseInt(betInput.value, 10);
@@ -535,25 +616,36 @@
 
         balance -= bet;
 
-        const card = Math.floor(Math.random() * 13) + 1; // 1–13
+        const value = Math.floor(Math.random() * 13) + 1; // 1–13
+        const suits = ["♠","♥","♦","♣"];
+        const suit = suits[Math.floor(Math.random() * suits.length)];
+
+        const rank = valueToRank(value);
+        cardDisplay.textContent = rank + suit;
+        if (suit === "♥" || suit === "♦") {
+          cardDisplay.style.color = "#f97373";
+        } else {
+          cardDisplay.style.color = "#e5e7eb";
+        }
+
         let outcome = "";
         let payout = 0;
 
-        if (card === 7) {
-          outcome = `Card is 7. House wins. You lose $${bet}.`;
+        if (value === 7) {
+          outcome = `Card is ${rank}${suit} (7). House wins. You lose $${bet}.`;
           lastResult = `Hi–Lo -$${bet}`;
-        } else if (card >= 8 && choice === "high") {
+        } else if (value >= 8 && choice === "high") {
           payout = bet * 2;
           balance += payout;
-          outcome = `Card is ${card} (High). You win $${payout}!`;
+          outcome = `Card is ${rank}${suit} (High). You win $${payout}!`;
           lastResult = `Hi–Lo +$${payout - bet}`;
-        } else if (card <= 6 && choice === "low") {
+        } else if (value <= 6 && choice === "low") {
           payout = bet * 2;
           balance += payout;
-          outcome = `Card is ${card} (Low). You win $${payout}!`;
+          outcome = `Card is ${rank}${suit} (Low). You win $${payout}!`;
           lastResult = `Hi–Lo +$${payout - bet}`;
         } else {
-          outcome = `Card is ${card}. You lose $${bet}.`;
+          outcome = `Card is ${rank}${suit}. You lose $${bet}.`;
           lastResult = `Hi–Lo -$${bet}`;
         }
 
@@ -561,20 +653,161 @@
         updateHUD();
       }
 
+      addOverlayButton("Bet High (8–K)", null, () => playHiLoRound("high"));
+      addOverlayButton("Bet Low (2–6)", null, () => playHiLoRound("low"));
+      addOverlayButton("Back to Floor", "secondary", hideOverlay);
+
       showOverlay();
     }
 
-    // ======== CASHIER (RESET) ========
+    // ======== ROULETTE GAME ========
+    function openRouletteGame() {
+      overlayTitle.textContent = "Roulette Wheel";
+      overlaySubtitle.textContent = "European style: 0–36. Red / Black pay 2×, single number pays 35×.";
+
+      overlayContent.innerHTML = "";
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "roulette-wrapper";
+
+      const wheel = document.createElement("div");
+      wheel.className = "roulette-wheel";
+      wheel.textContent = "–";
+
+      const numberText = document.createElement("div");
+      numberText.className = "roulette-number-text";
+      numberText.textContent = "Spin to see a result.";
+
+      wrapper.appendChild(wheel);
+      wrapper.appendChild(numberText);
+      overlayContent.appendChild(wrapper);
+
+      const inputRow = document.createElement("div");
+      inputRow.className = "input-row";
+
+      const label = document.createElement("span");
+      label.textContent = "Bet $";
+
+      const betInput = document.createElement("input");
+      betInput.type = "number";
+      betInput.value = "50";
+      betInput.min = "1";
+
+      inputRow.appendChild(label);
+      inputRow.appendChild(betInput);
+      overlayContent.appendChild(inputRow);
+
+      const numRow = document.createElement("div");
+      numRow.className = "input-row";
+
+      const numLabel = document.createElement("span");
+      numLabel.textContent = "Number (0–36):";
+
+      const numberInput = document.createElement("input");
+      numberInput.type = "number";
+      numberInput.className = "big";
+      numberInput.value = "17";
+
+      numRow.appendChild(numLabel);
+      numRow.appendChild(numberInput);
+      overlayContent.appendChild(numRow);
+
+      const small = document.createElement("div");
+      small.className = "small-text";
+      small.textContent = "Bet Red / Black for safer 2× payouts, or a single number for 35×.";
+      overlayContent.appendChild(small);
+
+      clearOverlayButtons();
+
+      function getRouletteColor(n) {
+        if (n === 0) return "green";
+        // simple parity-based color, not exact real mapping
+        return (n % 2 === 0) ? "black" : "red";
+      }
+
+      function spinRoulette(betType, betValue) {
+        let bet = parseInt(betInput.value, 10);
+        if (isNaN(bet) || bet <= 0) {
+          numberText.textContent = "Enter a valid positive bet.";
+          return;
+        }
+        if (balance < bet) {
+          numberText.textContent = "Not enough fake chips for that bet.";
+          lastResult = "Insufficient chips on Roulette";
+          updateHUD();
+          return;
+        }
+
+        balance -= bet;
+        updateHUD();
+
+        const result = Math.floor(Math.random() * 37); // 0–36
+        const color = getRouletteColor(result);
+
+        wheel.textContent = result;
+        if (color === "red") {
+          wheel.style.color = "#f97373";
+        } else if (color === "black") {
+          wheel.style.color = "#e5e7eb";
+        } else {
+          wheel.style.color = "#22c55e";
+        }
+
+        let payout = 0;
+        let msg = "";
+
+        if (betType === "color") {
+          if (color === betValue && color !== "green") {
+            payout = bet * 2;
+            balance += payout;
+            msg = `Result: ${result} (${color}). You won $${payout}!`;
+            lastResult = `Roulette ${betValue} +$${payout - bet}`;
+          } else {
+            msg = `Result: ${result} (${color}). You lost $${bet}.`;
+            lastResult = `Roulette ${betValue} -$${bet}`;
+          }
+        } else if (betType === "number") {
+          const chosen = parseInt(betValue, 10);
+          if (isNaN(chosen) || chosen < 0 || chosen > 36) {
+            msg = "Enter a valid number between 0 and 36.";
+            // refund bet if invalid setup
+            balance += bet;
+            updateHUD();
+            lastResult = "Roulette invalid number";
+          } else if (result === chosen) {
+            payout = bet * 35;
+            balance += payout;
+            msg = `Jackpot! Number ${result} hit. You won $${payout}!`;
+            lastResult = `Roulette #${chosen} +$${payout - bet}`;
+          } else {
+            msg = `Result: ${result} (${color}). You lost $${bet}.`;
+            lastResult = `Roulette #${chosen} -$${bet}`;
+          }
+        }
+
+        numberText.textContent = msg;
+        updateHUD();
+      }
+
+      addOverlayButton("Bet Red", null, () => spinRoulette("color","red"));
+      addOverlayButton("Bet Black", null, () => spinRoulette("color","black"));
+      addOverlayButton("Bet Number", null, () => spinRoulette("number", numberInput.value));
+      addOverlayButton("Back to Floor", "secondary", hideOverlay);
+
+      showOverlay();
+    }
+
+    // ======== CASHIER (RESET FAKE CHIPS) ========
     function openCashier() {
       overlayTitle.textContent = "Cashier";
-      overlaySubtitle.textContent = "Reset your fake chips if you go broke or just want to start over.";
+      overlaySubtitle.textContent = "Reset your fake chips if you go broke or want to start fresh.";
 
       overlayContent.innerHTML = `
         <div style="font-size:13px; margin-bottom:6px;">
           Current balance: <b>$${balance.toFixed(0)}</b>
         </div>
         <div class="small-text">
-          This is all pretend money. Use this to refill your chips to keep playing.
+          All of this is pretend money. Use this to refill your chips and keep playing.
         </div>
       `;
 
@@ -633,7 +866,7 @@
 
       // Check proximity to stations
       nearStation = null;
-      let minDist = 50;
+      let minDist = 60;
       stations.forEach(st => {
         const cx = st.x + st.w / 2;
         const cy = st.y + st.h / 2;
@@ -645,11 +878,10 @@
       });
 
       if (nearStation) {
-        let name = nearStation.label;
         if (nearStation.type === "reset") {
-          hintEl.textContent = `Press E to talk to the ${name} (reset fake chips).`;
+          hintEl.textContent = `Press E to talk to the ${nearStation.label} (reset fake chips).`;
         } else {
-          hintEl.textContent = `Press E to play ${name}.`;
+          hintEl.textContent = `Press E to play ${nearStation.label}.`;
         }
       } else {
         hintEl.textContent = "Use WASD / Arrow keys to walk. Find a table and press E to play.";
@@ -660,14 +892,14 @@
       // Background floor
       ctx.clearRect(0,0,WIDTH,HEIGHT);
 
-      // Carpet pattern
+      // Gradient floor
       const grad = ctx.createLinearGradient(0,0,WIDTH,HEIGHT);
       grad.addColorStop(0,"#020617");
       grad.addColorStop(1,"#020617");
       ctx.fillStyle = grad;
       ctx.fillRect(0,0,WIDTH,HEIGHT);
 
-      // Soft grid to feel like floor
+      // Soft grid like casino carpet
       ctx.strokeStyle = "rgba(15,23,42,0.5)";
       ctx.lineWidth = 1;
       const cellSize = 40;
@@ -684,6 +916,15 @@
         ctx.stroke();
       }
 
+      // Neon strips on the sides
+      ctx.fillStyle = "rgba(6,182,212,0.25)";
+      ctx.fillRect(26,0,8,HEIGHT);
+      ctx.fillRect(WIDTH-34,0,8,HEIGHT);
+
+      ctx.fillStyle = "rgba(248,113,113,0.25)";
+      ctx.fillRect(0,30,WIDTH,6);
+      ctx.fillRect(0,HEIGHT-36,WIDTH,6);
+
       // Walls
       ctx.fillStyle = "#020617";
       ctx.fillRect(0,0,WIDTH,26);
@@ -696,12 +937,18 @@
         let color = "#1f2937";
         if (st.type === "slots") color = "#4c1d95";
         if (st.type === "hilo") color = "#075985";
+        if (st.type === "roulette") color = "#b45309";
         if (st.type === "reset") color = "#14532d";
+
+        // Glow base
+        ctx.fillStyle = "rgba(15,23,42,0.7)";
+        ctx.fillRect(st.x - 6, st.y - 6, st.w + 12, st.h + 12);
 
         ctx.fillStyle = color;
         ctx.fillRect(st.x, st.y, st.w, st.h);
 
-        ctx.strokeStyle = "rgba(248,250,252,0.6)";
+        ctx.strokeStyle = "rgba(248,250,252,0.7)";
+        ctx.lineWidth = 2;
         ctx.strokeRect(st.x, st.y, st.w, st.h);
 
         // Label
@@ -711,14 +958,13 @@
         ctx.fillText(st.label, st.x + st.w / 2, st.y - 6);
       });
 
-      // Player
-      // Shadow
+      // Player shadow
       ctx.fillStyle = "rgba(15,23,42,0.7)";
       ctx.beginPath();
       ctx.arc(player.x, player.y + player.size/2, player.size*0.5, 0, Math.PI*2);
       ctx.fill();
 
-      // Body
+      // Player body
       ctx.fillStyle = player.color;
       ctx.fillRect(
         player.x - player.size/2,
@@ -727,7 +973,7 @@
         player.size
       );
 
-      // Outline
+      // Player outline
       ctx.strokeStyle = "rgba(15,23,42,0.95)";
       ctx.lineWidth = 2;
       ctx.strokeRect(
@@ -737,7 +983,7 @@
         player.size
       );
 
-      // Face
+      // Player face
       const inner = player.size * 0.55;
       ctx.fillStyle = "rgba(15,23,42,0.9)";
       ctx.fillRect(
@@ -747,7 +993,7 @@
         inner
       );
 
-      // Eyes
+      // Player eyes
       ctx.fillStyle = "#e5e7eb";
       const eyeOffset = inner * 0.18;
       const eyeSize = 3;
