@@ -75,7 +75,7 @@
       border: 1px solid rgba(148,163,184,0.5);
       font-size: 12px;
       z-index: 3;
-      min-width: 220px;
+      min-width: 260px;
       text-align: center;
       opacity: 0.9;
     }
@@ -95,7 +95,7 @@
     }
 
     #overlayInner {
-      width: 380px;
+      width: 400px;
       max-width: 90%;
       padding: 18px 20px 16px;
       border-radius: 16px;
@@ -119,7 +119,7 @@
     #overlayContent {
       font-size: 13px;
       margin-bottom: 10px;
-      min-height: 70px;
+      min-height: 80px;
     }
 
     .slot-reels {
@@ -194,6 +194,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      flex-wrap: wrap;
     }
 
     .input-row input {
@@ -229,6 +230,25 @@
       margin: 4px 0 8px;
     }
 
+    .dice-row {
+      display: flex;
+      gap: 8px;
+      margin: 6px 0 8px;
+      justify-content: center;
+    }
+
+    .die-display {
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+      border: 1px solid rgba(148,163,184,0.8);
+      background: #020617;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+    }
+
     .roulette-wrapper {
       text-align: center;
       margin-bottom: 6px;
@@ -244,12 +264,114 @@
       align-items: center;
       justify-content: center;
       font-size: 28px;
-      background: radial-gradient(circle at 20% 0%, #0f172a, #020617 60%, #000);
+      background: conic-gradient(
+        #16a34a 0deg 10deg,
+        #991b1b 10deg 30deg,
+        #111827 30deg 50deg,
+        #991b1b 50deg 70deg,
+        #111827 70deg 90deg,
+        #991b1b 90deg 110deg,
+        #111827 110deg 130deg,
+        #991b1b 130deg 150deg,
+        #111827 150deg 170deg,
+        #991b1b 170deg 190deg,
+        #111827 190deg 210deg,
+        #991b1b 210deg 230deg,
+        #111827 230deg 250deg,
+        #991b1b 250deg 270deg,
+        #111827 270deg 290deg,
+        #991b1b 290deg 310deg,
+        #111827 310deg 330deg,
+        #991b1b 330deg 350deg,
+        #16a34a 350deg 360deg
+      );
+      color: #e5e7eb;
+      position: relative;
+      transform: rotate(0deg);
+    }
+
+    .roulette-wheel-number {
+      position: relative;
+      z-index: 2;
+    }
+
+    .roulette-pointer {
+      position: absolute;
+      top: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-bottom: 8px solid #fbbf24;
     }
 
     .roulette-number-text {
       font-size: 11px;
       opacity: 0.85;
+    }
+
+    .double-wheel {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 3px solid rgba(148,163,184,0.8);
+      margin: 4px auto 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      background: conic-gradient(
+        #15803d 0deg 180deg,
+        #991b1b 180deg 360deg
+      );
+      color: #e5e7eb;
+      position: relative;
+      transform: rotate(0deg);
+    }
+
+    .double-pointer {
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 7px solid transparent;
+      border-right: 7px solid transparent;
+      border-bottom: 7px solid #eab308;
+    }
+
+    .hand-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin: 4px 0;
+    }
+
+    .hand-label {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .cards-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+
+    .card-small {
+      width: 40px;
+      height: 56px;
+      border-radius: 6px;
+      border: 1px solid rgba(148,163,184,0.8);
+      background: #020617;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
     }
   </style>
 </head>
@@ -264,7 +386,7 @@
       <span class="value" id="lastResultText">–</span>
     </div>
 
-    <div id="hint">Use WASD / Arrow keys to walk. Find a game and press E to play.</div>
+    <div id="hint">Use WASD / Arrow keys to walk. Find a table and press E to play.</div>
 
     <!-- Mini-game overlay -->
     <div id="overlay">
@@ -307,7 +429,7 @@
     const player = {
       x: WIDTH / 2,
       y: HEIGHT - 80,
-      size: 20,
+      size: 22,
       speed: 200,
       color: "#22d3ee"
     };
@@ -321,11 +443,19 @@
 
     let gameState = "walking"; // "walking" | "mini"
 
-    // Stations: Slots, Hi-Lo, Roulette, Cashier
+    // Stations: Slots, Hi-Lo, Roulette, Cashier, Dice, Double, Blackjack
     const stations = [
       {
+        x: WIDTH / 2 - 260,
+        y: HEIGHT / 2 - 150,
+        w: 90,
+        h: 42,
+        type: "blackjack",
+        label: "Blackjack"
+      },
+      {
         x: WIDTH / 2 - 180,
-        y: HEIGHT / 2 - 70,
+        y: HEIGHT / 2 - 40,
         w: 80,
         h: 40,
         type: "slots",
@@ -333,7 +463,7 @@
       },
       {
         x: WIDTH / 2 + 100,
-        y: HEIGHT / 2 - 70,
+        y: HEIGHT / 2 - 40,
         w: 80,
         h: 40,
         type: "hilo",
@@ -341,15 +471,31 @@
       },
       {
         x: WIDTH / 2 - 40,
-        y: HEIGHT / 2 - 160,
+        y: HEIGHT / 2 - 140,
         w: 80,
         h: 40,
         type: "roulette",
         label: "Roulette"
       },
       {
+        x: WIDTH / 2 - 260,
+        y: HEIGHT / 2 + 60,
+        w: 80,
+        h: 40,
+        type: "dice",
+        label: "Dice"
+      },
+      {
+        x: WIDTH / 2 + 180,
+        y: HEIGHT / 2 + 60,
+        w: 80,
+        h: 40,
+        type: "double",
+        label: "Double"
+      },
+      {
         x: WIDTH / 2 - 40,
-        y: HEIGHT / 2 + 90,
+        y: HEIGHT / 2 + 120,
         w: 80,
         h: 40,
         type: "reset",
@@ -427,6 +573,12 @@
         openRouletteGame();
       } else if (station.type === "reset") {
         openCashier();
+      } else if (station.type === "dice") {
+        openDiceGame();
+      } else if (station.type === "double") {
+        openDoubleGame();
+      } else if (station.type === "blackjack") {
+        openBlackjackGame();
       }
     }
 
@@ -507,7 +659,7 @@
         function spinFrame(now) {
           const t = now - startTime;
 
-          // Just flick through random symbols
+          // flick random symbols
           reel1.textContent = randomSymbol();
           reel2.textContent = randomSymbol();
           reel3.textContent = randomSymbol();
@@ -557,7 +709,7 @@
     // ======== HI–LO GAME (showing a CARD) ========
     function openHiLoGame() {
       overlayTitle.textContent = "Hi–Lo Table";
-      overlaySubtitle.textContent = "Bet on whether the card (A–K) is high (8–K) or low (2–6). 7 is house win.";
+      overlaySubtitle.textContent = "Bet if the card (A–K) is high (8–K) or low (2–6). 7 is house win.";
 
       overlayContent.innerHTML = "";
 
@@ -588,7 +740,7 @@
 
       const small = document.createElement("div");
       small.className = "small-text";
-      small.textContent = "Purely fake money. Win: 2× bet. Lose: lose your bet.";
+      small.textContent = "Fake money only. Win: 2× bet. Lose: lose your bet.";
       overlayContent.appendChild(small);
 
       clearOverlayButtons();
@@ -660,7 +812,7 @@
       showOverlay();
     }
 
-    // ======== ROULETTE GAME ========
+    // ======== ROULETTE GAME (spinning wheel) ========
     function openRouletteGame() {
       overlayTitle.textContent = "Roulette Wheel";
       overlaySubtitle.textContent = "European style: 0–36. Red / Black pay 2×, single number pays 35×.";
@@ -672,7 +824,15 @@
 
       const wheel = document.createElement("div");
       wheel.className = "roulette-wheel";
-      wheel.textContent = "–";
+
+      const pointer = document.createElement("div");
+      pointer.className = "roulette-pointer";
+      wheel.appendChild(pointer);
+
+      const wheelNumber = document.createElement("div");
+      wheelNumber.className = "roulette-wheel-number";
+      wheelNumber.textContent = "–";
+      wheel.appendChild(wheelNumber);
 
       const numberText = document.createElement("div");
       numberText.className = "roulette-number-text";
@@ -714,18 +874,21 @@
 
       const small = document.createElement("div");
       small.className = "small-text";
-      small.textContent = "Bet Red / Black for safer 2× payouts, or a single number for 35×.";
+      small.textContent = "This is pretend money. Colors use a simple pattern, not an exact real wheel.";
       overlayContent.appendChild(small);
 
       clearOverlayButtons();
 
+      let spinning = false;
+
       function getRouletteColor(n) {
         if (n === 0) return "green";
-        // simple parity-based color, not exact real mapping
         return (n % 2 === 0) ? "black" : "red";
       }
 
       function spinRoulette(betType, betValue) {
+        if (spinning) return;
+
         let bet = parseInt(betInput.value, 10);
         if (isNaN(bet) || bet <= 0) {
           numberText.textContent = "Enter a valid positive bet.";
@@ -744,54 +907,521 @@
         const result = Math.floor(Math.random() * 37); // 0–36
         const color = getRouletteColor(result);
 
-        wheel.textContent = result;
-        if (color === "red") {
-          wheel.style.color = "#f97373";
-        } else if (color === "black") {
-          wheel.style.color = "#e5e7eb";
-        } else {
-          wheel.style.color = "#22c55e";
-        }
+        spinning = true;
+        numberText.textContent = "Spinning...";
+        wheelNumber.textContent = "";
 
-        let payout = 0;
-        let msg = "";
+        const spinDuration = 1200;
+        const startTime = performance.now();
+        const finalAngle = 360 * 4 + (result / 37) * 360;
 
-        if (betType === "color") {
-          if (color === betValue && color !== "green") {
-            payout = bet * 2;
-            balance += payout;
-            msg = `Result: ${result} (${color}). You won $${payout}!`;
-            lastResult = `Roulette ${betValue} +$${payout - bet}`;
+        function spinFrame(now) {
+          const t = (now - startTime) / spinDuration;
+          if (t < 1) {
+            const eased = 1 - Math.pow(1 - t, 3); // ease-out
+            const angle = eased * finalAngle;
+            wheel.style.transform = `rotate(${angle}deg)`;
+            requestAnimationFrame(spinFrame);
           } else {
-            msg = `Result: ${result} (${color}). You lost $${bet}.`;
-            lastResult = `Roulette ${betValue} -$${bet}`;
-          }
-        } else if (betType === "number") {
-          const chosen = parseInt(betValue, 10);
-          if (isNaN(chosen) || chosen < 0 || chosen > 36) {
-            msg = "Enter a valid number between 0 and 36.";
-            // refund bet if invalid setup
-            balance += bet;
+            wheel.style.transform = `rotate(${finalAngle}deg)`;
+            wheelNumber.textContent = result;
+            if (color === "red") {
+              wheelNumber.style.color = "#f97373";
+            } else if (color === "black") {
+              wheelNumber.style.color = "#e5e7eb";
+            } else {
+              wheelNumber.style.color = "#22c55e";
+            }
+
+            let payout = 0;
+            let msg = "";
+
+            if (betType === "color") {
+              if (color === betValue && color !== "green") {
+                payout = bet * 2;
+                balance += payout;
+                msg = `Result: ${result} (${color}). You won $${payout}!`;
+                lastResult = `Roulette ${betValue} +$${payout - bet}`;
+              } else {
+                msg = `Result: ${result} (${color}). You lost $${bet}.`;
+                lastResult = `Roulette ${betValue} -$${bet}`;
+              }
+            } else if (betType === "number") {
+              const chosen = parseInt(betValue, 10);
+              if (isNaN(chosen) || chosen < 0 || chosen > 36) {
+                msg = "Enter a valid number between 0 and 36.";
+                // refund bet if invalid
+                balance += bet;
+                lastResult = "Roulette invalid number";
+              } else if (result === chosen) {
+                payout = bet * 35;
+                balance += payout;
+                msg = `Jackpot! ${result} hit. You won $${payout}!`;
+                lastResult = `Roulette #${chosen} +$${payout - bet}`;
+              } else {
+                msg = `Result: ${result} (${color}). You lost $${bet}.`;
+                lastResult = `Roulette #${chosen} -$${bet}`;
+              }
+            }
+
+            numberText.textContent = msg;
             updateHUD();
-            lastResult = "Roulette invalid number";
-          } else if (result === chosen) {
-            payout = bet * 35;
-            balance += payout;
-            msg = `Jackpot! Number ${result} hit. You won $${payout}!`;
-            lastResult = `Roulette #${chosen} +$${payout - bet}`;
-          } else {
-            msg = `Result: ${result} (${color}). You lost $${bet}.`;
-            lastResult = `Roulette #${chosen} -$${bet}`;
+            spinning = false;
           }
         }
 
-        numberText.textContent = msg;
-        updateHUD();
+        requestAnimationFrame(spinFrame);
       }
 
       addOverlayButton("Bet Red", null, () => spinRoulette("color","red"));
       addOverlayButton("Bet Black", null, () => spinRoulette("color","black"));
       addOverlayButton("Bet Number", null, () => spinRoulette("number", numberInput.value));
+      addOverlayButton("Back to Floor", "secondary", hideOverlay);
+
+      showOverlay();
+    }
+
+    // ======== DICE GAME (Over / Under 7) ========
+    function openDiceGame() {
+      overlayTitle.textContent = "Dice Duel";
+      overlaySubtitle.textContent = "Bet if two dice will total over 7 or under 7. 7 is house win.";
+
+      overlayContent.innerHTML = "";
+
+      const status = document.createElement("div");
+      status.textContent = "Place a bet and choose Over or Under.";
+      status.style.marginBottom = "6px";
+      overlayContent.appendChild(status);
+
+      const diceRow = document.createElement("div");
+      diceRow.className = "dice-row";
+
+      const die1 = document.createElement("div");
+      const die2 = document.createElement("div");
+      die1.className = die2.className = "die-display";
+      die1.textContent = "–";
+      die2.textContent = "–";
+
+      diceRow.appendChild(die1);
+      diceRow.appendChild(die2);
+      overlayContent.appendChild(diceRow);
+
+      const inputRow = document.createElement("div");
+      inputRow.className = "input-row";
+
+      const label = document.createElement("span");
+      label.textContent = "Bet $";
+
+      const betInput = document.createElement("input");
+      betInput.type = "number";
+      betInput.value = "25";
+      betInput.min = "1";
+
+      inputRow.appendChild(label);
+      inputRow.appendChild(betInput);
+      overlayContent.appendChild(inputRow);
+
+      const small = document.createElement("div");
+      small.className = "small-text";
+      small.textContent = "Fake chips only. Win: 2× bet. 7 always loses.";
+      overlayContent.appendChild(small);
+
+      clearOverlayButtons();
+
+      function rollDie() {
+        return Math.floor(Math.random() * 6) + 1;
+      }
+
+      function dieFace(n) {
+        const faces = ["⚀","⚁","⚂","⚃","⚄","⚅"];
+        return faces[n - 1] || "–";
+      }
+
+      function playDice(choice) {
+        let bet = parseInt(betInput.value, 10);
+        if (isNaN(bet) || bet <= 0) {
+          status.textContent = "Enter a valid positive bet.";
+          return;
+        }
+        if (balance < bet) {
+          status.textContent = "Not enough fake chips for that bet.";
+          lastResult = "Insufficient chips on Dice";
+          updateHUD();
+          return;
+        }
+
+        balance -= bet;
+        updateHUD();
+
+        const d1 = rollDie();
+        const d2 = rollDie();
+        const total = d1 + d2;
+
+        die1.textContent = dieFace(d1);
+        die2.textContent = dieFace(d2);
+
+        let outcome = "";
+        let payout = 0;
+
+        if (total === 7) {
+          outcome = `Roll: ${total}. House wins. You lose $${bet}.`;
+          lastResult = `Dice -$${bet}`;
+        } else if (choice === "over" && total > 7) {
+          payout = bet * 2;
+          balance += payout;
+          outcome = `Roll: ${total} (Over). You win $${payout}!`;
+          lastResult = `Dice +$${payout - bet}`;
+        } else if (choice === "under" && total < 7) {
+          payout = bet * 2;
+          balance += payout;
+          outcome = `Roll: ${total} (Under). You win $${payout}!`;
+          lastResult = `Dice +$${payout - bet}`;
+        } else {
+          outcome = `Roll: ${total}. You lose $${bet}.`;
+          lastResult = `Dice -$${bet}`;
+        }
+
+        status.textContent = outcome;
+        updateHUD();
+      }
+
+      addOverlayButton("Bet Over 7", null, () => playDice("over"));
+      addOverlayButton("Bet Under 7", null, () => playDice("under"));
+      addOverlayButton("Back to Floor", "secondary", hideOverlay);
+
+      showOverlay();
+    }
+
+    // ======== DOUBLE OR NOTHING WHEEL ========
+    function openDoubleGame() {
+      overlayTitle.textContent = "Double or Nothing";
+      overlaySubtitle.textContent = "Bet chips and spin: about half the time you double, half you lose.";
+
+      overlayContent.innerHTML = "";
+
+      const wheel = document.createElement("div");
+      wheel.className = "double-wheel";
+
+      const pointer = document.createElement("div");
+      pointer.className = "double-pointer";
+      wheel.appendChild(pointer);
+
+      const wheelText = document.createElement("div");
+      wheelText.textContent = "?";
+      wheelText.style.position = "relative";
+      wheelText.style.zIndex = "2";
+      wheel.appendChild(wheelText);
+
+      overlayContent.appendChild(wheel);
+
+      const status = document.createElement("div");
+      status.className = "small-text";
+      status.textContent = "Bet and spin. Win: get 2× bet back. Lose: lose bet.";
+      overlayContent.appendChild(status);
+
+      const inputRow = document.createElement("div");
+      inputRow.className = "input-row";
+
+      const label = document.createElement("span");
+      label.textContent = "Bet $";
+
+      const betInput = document.createElement("input");
+      betInput.type = "number";
+      betInput.value = "50";
+      betInput.min = "1";
+
+      inputRow.appendChild(label);
+      inputRow.appendChild(betInput);
+      overlayContent.appendChild(inputRow);
+
+      clearOverlayButtons();
+
+      let spinning = false;
+
+      addOverlayButton("Spin", null, () => {
+        if (spinning) return;
+
+        let bet = parseInt(betInput.value, 10);
+        if (isNaN(bet) || bet <= 0) {
+          status.textContent = "Enter a valid positive bet.";
+          return;
+        }
+        if (balance < bet) {
+          status.textContent = "Not enough fake chips for that bet.";
+          lastResult = "Insufficient chips on Double";
+          updateHUD();
+          return;
+        }
+
+        balance -= bet;
+        updateHUD();
+
+        spinning = true;
+        status.textContent = "Spinning...";
+        wheelText.textContent = "";
+
+        const win = Math.random() < 0.48; // slightly under 50/50
+        const spinDuration = 900;
+        const startTime = performance.now();
+        const finalAngle = 360 * 3 + (win ? 90 : 270); // aim roughly at green or red half
+
+        function spinFrame(now) {
+          const t = (now - startTime) / spinDuration;
+          if (t < 1) {
+            const eased = 1 - Math.pow(1 - t, 3);
+            const angle = eased * finalAngle;
+            wheel.style.transform = `rotate(${angle}deg)`;
+            requestAnimationFrame(spinFrame);
+          } else {
+            wheel.style.transform = `rotate(${finalAngle}deg)`;
+            if (win) {
+              const payout = bet * 2;
+              balance += payout;
+              status.textContent = `You DOUBLED! +$${payout}.`;
+              wheelText.textContent = "2×";
+              lastResult = `Double +$${payout - bet}`;
+            } else {
+              status.textContent = `Nothing this time. You lost $${bet}.`;
+              wheelText.textContent = "X";
+              lastResult = `Double -$${bet}`;
+            }
+            updateHUD();
+            spinning = false;
+          }
+        }
+
+        requestAnimationFrame(spinFrame);
+      });
+
+      addOverlayButton("Back to Floor", "secondary", hideOverlay);
+
+      showOverlay();
+    }
+
+    // ======== BLACKJACK LITE ========
+    function openBlackjackGame() {
+      overlayTitle.textContent = "Blackjack (Lite)";
+      overlaySubtitle.textContent = "Simple rules: 21 beats dealer, dealer hits to 17. Both hands visible for clarity.";
+
+      overlayContent.innerHTML = "";
+
+      const status = document.createElement("div");
+      status.textContent = "Set your bet and press Deal.";
+      status.style.marginBottom = "6px";
+      overlayContent.appendChild(status);
+
+      const inputRow = document.createElement("div");
+      inputRow.className = "input-row";
+
+      const label = document.createElement("span");
+      label.textContent = "Bet $";
+
+      const betInput = document.createElement("input");
+      betInput.type = "number";
+      betInput.value = "50";
+      betInput.min = "1";
+
+      inputRow.appendChild(label);
+      inputRow.appendChild(betInput);
+      overlayContent.appendChild(inputRow);
+
+      const playerHandRow = document.createElement("div");
+      playerHandRow.className = "hand-row";
+      const playerLabel = document.createElement("div");
+      playerLabel.className = "hand-label";
+      playerLabel.textContent = "Your Hand:";
+      const playerCardsDiv = document.createElement("div");
+      playerCardsDiv.className = "cards-row";
+      playerHandRow.appendChild(playerLabel);
+      playerHandRow.appendChild(playerCardsDiv);
+
+      const dealerHandRow = document.createElement("div");
+      dealerHandRow.className = "hand-row";
+      const dealerLabel = document.createElement("div");
+      dealerLabel.className = "hand-label";
+      dealerLabel.textContent = "Dealer:";
+      const dealerCardsDiv = document.createElement("div");
+      dealerCardsDiv.className = "cards-row";
+      dealerHandRow.appendChild(dealerLabel);
+      dealerHandRow.appendChild(dealerCardsDiv);
+
+      overlayContent.appendChild(playerHandRow);
+      overlayContent.appendChild(dealerHandRow);
+
+      const small = document.createElement("div");
+      small.className = "small-text";
+      small.textContent = "This is a simplified version. No splits / doubles; just Deal, Hit, Stand. Fake money only.";
+      overlayContent.appendChild(small);
+
+      clearOverlayButtons();
+
+      let playerHand = [];
+      let dealerHand = [];
+      let roundActive = false;
+      let currentBet = 0;
+
+      function randomCard() {
+        const value = Math.floor(Math.random() * 13) + 1; // 1–13
+        const suits = ["♠","♥","♦","♣"];
+        const suit = suits[Math.floor(Math.random() * suits.length)];
+        return { value, suit };
+      }
+
+      function cardRank(card) {
+        const v = card.value;
+        if (v === 1) return "A";
+        if (v === 11) return "J";
+        if (v === 12) return "Q";
+        if (v === 13) return "K";
+        return String(v);
+      }
+
+      function handTotal(hand) {
+        let total = 0;
+        let aces = 0;
+        for (const c of hand) {
+          let v = c.value;
+          if (v > 10) v = 10;
+          if (v === 1) {
+            v = 11;
+            aces++;
+          }
+          total += v;
+        }
+        while (total > 21 && aces > 0) {
+          total -= 10;
+          aces--;
+        }
+        return total;
+      }
+
+      function renderHand(container, hand) {
+        container.innerHTML = "";
+        hand.forEach(card => {
+          const d = document.createElement("div");
+          d.className = "card-small";
+          const rank = cardRank(card);
+          d.textContent = rank + card.suit;
+          if (card.suit === "♥" || card.suit === "♦") {
+            d.style.color = "#f97373";
+          } else {
+            d.style.color = "#e5e7eb";
+          }
+          container.appendChild(d);
+        });
+        const total = handTotal(hand);
+        const totalDiv = document.createElement("div");
+        totalDiv.className = "small-text";
+        totalDiv.textContent = `Total: ${total}`;
+        container.appendChild(totalDiv);
+      }
+
+      function startRound() {
+        if (roundActive) {
+          status.textContent = "Finish the current round first (Hit or Stand).";
+          return;
+        }
+
+        let bet = parseInt(betInput.value, 10);
+        if (isNaN(bet) || bet <= 0) {
+          status.textContent = "Enter a valid positive bet.";
+          return;
+        }
+        if (balance < bet) {
+          status.textContent = "Not enough fake chips for that bet.";
+          lastResult = "Insufficient chips on Blackjack";
+          updateHUD();
+          return;
+        }
+
+        balance -= bet;
+        updateHUD();
+
+        currentBet = bet;
+        roundActive = true;
+        playerHand = [randomCard(), randomCard()];
+        dealerHand = [randomCard(), randomCard()];
+
+        renderHand(playerCardsDiv, playerHand);
+        renderHand(dealerCardsDiv, dealerHand);
+
+        const pTotal = handTotal(playerHand);
+        const dTotal = handTotal(dealerHand);
+
+        if (pTotal === 21 && dTotal !== 21) {
+          const payout = Math.round(currentBet * 2.5);
+          balance += payout;
+          status.textContent = `Blackjack! You win $${payout}.`;
+          lastResult = `Blackjack +$${payout - currentBet}`;
+          updateHUD();
+          roundActive = false;
+        } else {
+          status.textContent = "You are dealt two cards. Hit or Stand.";
+        }
+      }
+
+      function playerHit() {
+        if (!roundActive) {
+          status.textContent = "Press Deal to start a hand.";
+          return;
+        }
+        playerHand.push(randomCard());
+        renderHand(playerCardsDiv, playerHand);
+
+        const total = handTotal(playerHand);
+        if (total > 21) {
+          status.textContent = `You bust with ${total}. You lose $${currentBet}.`;
+          lastResult = `Blackjack -$${currentBet}`;
+          roundActive = false;
+          updateHUD();
+        } else {
+          status.textContent = `You have ${total}. Hit or Stand.`;
+        }
+      }
+
+      function playerStand() {
+        if (!roundActive) {
+          status.textContent = "Press Deal to start a hand.";
+          return;
+        }
+
+        let dTotal = handTotal(dealerHand);
+        while (dTotal < 17) {
+          dealerHand.push(randomCard());
+          dTotal = handTotal(dealerHand);
+        }
+        renderHand(dealerCardsDiv, dealerHand);
+
+        const pTotal = handTotal(playerHand);
+
+        let msg = "";
+        if (dTotal > 21) {
+          const payout = currentBet * 2;
+          balance += payout;
+          msg = `Dealer busts with ${dTotal}. You win $${payout}.`;
+          lastResult = `Blackjack +$${payout - currentBet}`;
+        } else if (pTotal > dTotal) {
+          const payout = currentBet * 2;
+          balance += payout;
+          msg = `You ${pTotal} vs dealer ${dTotal}. You win $${payout}.`;
+          lastResult = `Blackjack +$${payout - currentBet}`;
+        } else if (pTotal === dTotal) {
+          balance += currentBet;
+          msg = `Push ${pTotal}–${dTotal}. You get your $${currentBet} back.`;
+          lastResult = "Blackjack push";
+        } else {
+          msg = `Dealer wins ${dTotal} vs ${pTotal}. You lose $${currentBet}.`;
+          lastResult = `Blackjack -$${currentBet}`;
+        }
+
+        status.textContent = msg;
+        updateHUD();
+        roundActive = false;
+      }
+
+      addOverlayButton("Deal / New Hand", null, startRound);
+      addOverlayButton("Hit", null, playerHit);
+      addOverlayButton("Stand", null, playerStand);
       addOverlayButton("Back to Floor", "secondary", hideOverlay);
 
       showOverlay();
@@ -866,7 +1496,7 @@
 
       // Check proximity to stations
       nearStation = null;
-      let minDist = 60;
+      let minDist = 70;
       stations.forEach(st => {
         const cx = st.x + st.w / 2;
         const cy = st.y + st.h / 2;
@@ -889,61 +1519,71 @@
     }
 
     function render() {
-      // Background floor
       ctx.clearRect(0,0,WIDTH,HEIGHT);
 
-      // Gradient floor
+      // Fancy carpet background
       const grad = ctx.createLinearGradient(0,0,WIDTH,HEIGHT);
       grad.addColorStop(0,"#020617");
       grad.addColorStop(1,"#020617");
       ctx.fillStyle = grad;
       ctx.fillRect(0,0,WIDTH,HEIGHT);
 
-      // Soft grid like casino carpet
-      ctx.strokeStyle = "rgba(15,23,42,0.5)";
-      ctx.lineWidth = 1;
-      const cellSize = 40;
-      for (let x=0; x<WIDTH; x+=cellSize) {
-        ctx.beginPath();
-        ctx.moveTo(x,0);
-        ctx.lineTo(x,HEIGHT);
-        ctx.stroke();
-      }
-      for (let y=0; y<HEIGHT; y+=cellSize) {
-        ctx.beginPath();
-        ctx.moveTo(0,y);
-        ctx.lineTo(WIDTH,y);
-        ctx.stroke();
+      // Diamond patterned carpet
+      const size = 40;
+      for (let y = 0; y < HEIGHT; y += size) {
+        for (let x = 0; x < WIDTH; x += size) {
+          ctx.save();
+          ctx.translate(x + size/2, y + size/2);
+          ctx.rotate(Math.PI / 4);
+          ctx.fillStyle = ( (x/size + y/size) % 2 === 0 )
+            ? "rgba(30,64,175,0.18)"
+            : "rgba(180,83,9,0.18)";
+          ctx.fillRect(-size/3, -size/3, size/1.5, size/1.5);
+          ctx.restore();
+        }
       }
 
-      // Neon strips on the sides
-      ctx.fillStyle = "rgba(6,182,212,0.25)";
-      ctx.fillRect(26,0,8,HEIGHT);
-      ctx.fillRect(WIDTH-34,0,8,HEIGHT);
+      // Neon paths
+      ctx.fillStyle = "rgba(6,182,212,0.2)";
+      ctx.fillRect(26,0,10,HEIGHT);
+      ctx.fillRect(WIDTH-36,0,10,HEIGHT);
 
-      ctx.fillStyle = "rgba(248,113,113,0.25)";
+      ctx.fillStyle = "rgba(236,72,153,0.2)";
       ctx.fillRect(0,30,WIDTH,6);
       ctx.fillRect(0,HEIGHT-36,WIDTH,6);
 
-      // Walls
+      // Walls / ceiling line
       ctx.fillStyle = "#020617";
       ctx.fillRect(0,0,WIDTH,26);
       ctx.fillRect(0,HEIGHT-26,WIDTH,26);
       ctx.fillRect(0,0,26,HEIGHT);
       ctx.fillRect(WIDTH-26,0,26,HEIGHT);
 
-      // Stations (tables / machines)
+      // Ceiling lights
+      for (let i = 0; i < 5; i++) {
+        const lx = 80 + i * 160;
+        ctx.fillStyle = "rgba(248,250,252,0.08)";
+        ctx.beginPath();
+        ctx.arc(lx, 26, 22, 0, Math.PI*2);
+        ctx.fill();
+      }
+
+      // Stations with custom icons
       stations.forEach(st => {
         let color = "#1f2937";
         if (st.type === "slots") color = "#4c1d95";
         if (st.type === "hilo") color = "#075985";
         if (st.type === "roulette") color = "#b45309";
         if (st.type === "reset") color = "#14532d";
+        if (st.type === "dice") color = "#7c2d12";
+        if (st.type === "double") color = "#0369a1";
+        if (st.type === "blackjack") color = "#166534";
 
-        // Glow base
+        // glow base
         ctx.fillStyle = "rgba(15,23,42,0.7)";
         ctx.fillRect(st.x - 6, st.y - 6, st.w + 12, st.h + 12);
 
+        // main table/machine
         ctx.fillStyle = color;
         ctx.fillRect(st.x, st.y, st.w, st.h);
 
@@ -956,51 +1596,109 @@
         ctx.font = "12px system-ui";
         ctx.textAlign = "center";
         ctx.fillText(st.label, st.x + st.w / 2, st.y - 6);
+
+        // Icon inside the table
+        const cx = st.x + st.w / 2;
+        const cy = st.y + st.h / 2;
+        ctx.save();
+        ctx.translate(cx, cy);
+        if (st.type === "slots") {
+          // three slot windows
+          ctx.fillStyle = "#020617";
+          const w = st.w * 0.2;
+          const h = st.h * 0.5;
+          ctx.fillRect(-w - 4, -h/2, w, h);
+          ctx.fillRect(-w/2, -h/2, w, h);
+          ctx.fillRect(4, -h/2, w, h);
+        } else if (st.type === "hilo") {
+          // two card shapes
+          ctx.fillStyle = "#020617";
+          ctx.fillRect(-10, -8, 16, 20);
+          ctx.fillRect(-2, -10, 16, 20);
+        } else if (st.type === "roulette") {
+          ctx.beginPath();
+          ctx.fillStyle = "#020617";
+          ctx.arc(0,0,10,0,Math.PI*2);
+          ctx.fill();
+        } else if (st.type === "reset") {
+          ctx.fillStyle = "#facc15";
+          ctx.font = "14px system-ui";
+          ctx.fillText("$",0,5);
+        } else if (st.type === "dice") {
+          ctx.fillStyle = "#020617";
+          ctx.fillRect(-10, -10, 16, 16);
+          ctx.fillRect(2, -2, 16, 16);
+        } else if (st.type === "double") {
+          ctx.strokeStyle = "#e5e7eb";
+          ctx.beginPath();
+          ctx.moveTo(-8,4);
+          ctx.lineTo(0,-4);
+          ctx.lineTo(8,4);
+          ctx.stroke();
+        } else if (st.type === "blackjack") {
+          ctx.fillStyle = "#020617";
+          ctx.fillRect(-14, -10, 18, 22);
+          ctx.fillRect(-4, -12, 18, 22);
+        }
+        ctx.restore();
       });
 
       // Player shadow
       ctx.fillStyle = "rgba(15,23,42,0.7)";
       ctx.beginPath();
-      ctx.arc(player.x, player.y + player.size/2, player.size*0.5, 0, Math.PI*2);
+      ctx.ellipse(player.x, player.y + player.size*0.4, player.size*0.7, player.size*0.35, 0, 0, Math.PI*2);
       ctx.fill();
 
-      // Player body
+      // Player body (torso)
+      const bodyW = player.size * 0.7;
+      const bodyH = player.size * 1.1;
+      const bodyX = player.x - bodyW/2;
+      const bodyY = player.y - bodyH/2 + 4;
       ctx.fillStyle = player.color;
-      ctx.fillRect(
-        player.x - player.size/2,
-        player.y - player.size/2,
-        player.size,
-        player.size
-      );
+      ctx.fillRect(bodyX, bodyY, bodyW, bodyH);
 
-      // Player outline
+      // Body outline
       ctx.strokeStyle = "rgba(15,23,42,0.95)";
       ctx.lineWidth = 2;
-      ctx.strokeRect(
-        player.x - player.size/2,
-        player.y - player.size/2,
-        player.size,
-        player.size
-      );
+      ctx.strokeRect(bodyX, bodyY, bodyW, bodyH);
 
-      // Player face
-      const inner = player.size * 0.55;
-      ctx.fillStyle = "rgba(15,23,42,0.9)";
-      ctx.fillRect(
-        player.x - inner/2,
-        player.y - inner/2,
-        inner,
-        inner
-      );
-
-      // Player eyes
+      // Player head
+      const headR = player.size * 0.45;
+      const headX = player.x;
+      const headY = bodyY - headR + 4;
       ctx.fillStyle = "#e5e7eb";
-      const eyeOffset = inner * 0.18;
-      const eyeSize = 3;
       ctx.beginPath();
-      ctx.arc(player.x - eyeOffset, player.y - eyeOffset, eyeSize, 0, Math.PI*2);
-      ctx.arc(player.x + eyeOffset, player.y - eyeOffset, eyeSize, 0, Math.PI*2);
+      ctx.arc(headX, headY, headR, 0, Math.PI * 2);
       ctx.fill();
+
+      ctx.strokeStyle = "rgba(15,23,42,0.9)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(headX, headY, headR, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Simple hair band
+      ctx.strokeStyle = "#020617";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(headX, headY - 2, headR * 0.9, Math.PI*0.2, Math.PI*0.8);
+      ctx.stroke();
+
+      // Eyes
+      ctx.fillStyle = "#020617";
+      const eyeOffset = headR * 0.35;
+      const eyeY = headY - headR * 0.15;
+      ctx.beginPath();
+      ctx.arc(headX - eyeOffset, eyeY, 2.2, 0, Math.PI*2);
+      ctx.arc(headX + eyeOffset, eyeY, 2.2, 0, Math.PI*2);
+      ctx.fill();
+
+      // Simple mouth
+      ctx.strokeStyle = "#0f172a";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(headX, headY + headR*0.2, headR*0.35, 0, Math.PI);
+      ctx.stroke();
     }
 
     // ======== START ========
