@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Mini Geometry Dash</title>
+  <title>Mini Geometry Runner</title>
   <style>
     * {
       box-sizing: border-box;
@@ -12,7 +12,7 @@
     }
 
     body {
-      background: radial-gradient(circle at top, #202a3d, #050711);
+      background: radial-gradient(circle at top, #111827, #020617);
       height: 100vh;
       display: flex;
       align-items: center;
@@ -24,17 +24,18 @@
       position: relative;
       width: 900px;
       height: 500px;
-      border-radius: 16px;
+      border-radius: 24px;
       overflow: hidden;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
-      background: linear-gradient(#121826, #060912);
+      background: radial-gradient(circle at top left, #1f2937, #020617);
+      box-shadow: 0 28px 60px rgba(0,0,0,0.9);
+      border: 1px solid rgba(148,163,184,0.3);
     }
 
     #gameCanvas {
       display: block;
       width: 100%;
       height: 100%;
-      background: linear-gradient(#1b2340, #05060a);
+      background: radial-gradient(circle at top, #020617, #020617 45%, #020617 46%, #000 100%);
     }
 
     .overlay {
@@ -44,9 +45,10 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(circle at top, rgba(0,0,0,0.7), rgba(0,0,0,0.95));
+      background: radial-gradient(circle at top, rgba(15,23,42,0.9), rgba(15,23,42,0.98));
       text-align: center;
       padding: 24px;
+      backdrop-filter: blur(10px);
     }
 
     .hidden {
@@ -54,19 +56,21 @@
     }
 
     h1 {
-      font-size: 42px;
-      margin-bottom: 10px;
-      letter-spacing: 2px;
+      font-size: 40px;
+      margin-bottom: 8px;
+      letter-spacing: 3px;
       text-transform: uppercase;
+      text-shadow: 0 0 10px rgba(56,189,248,0.8);
     }
 
     h2 {
       font-size: 28px;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
+      text-shadow: 0 0 8px rgba(248,250,252,0.6);
     }
 
     p {
-      opacity: 0.8;
+      opacity: 0.85;
       margin-bottom: 18px;
     }
 
@@ -84,12 +88,12 @@
       border-radius: 999px;
       cursor: pointer;
       font-weight: 600;
-      font-size: 14px;
+      font-size: 13px;
       text-transform: uppercase;
       letter-spacing: 1px;
-      background: #ffbb33;
-      color: #1a1425;
-      box-shadow: 0 4px 0 #d18f15;
+      background: linear-gradient(135deg,#22c55e,#22d3ee);
+      color: #020617;
+      box-shadow: 0 4px 0 #0f766e, 0 0 10px rgba(45,212,191,0.7);
       transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.12s ease;
     }
 
@@ -98,19 +102,53 @@
     }
 
     button:active {
-      transform: translateY(2px);
-      box-shadow: 0 2px 0 #916312;
+      transform: translateY(2px) scale(0.98);
+      box-shadow: 0 2px 0 #0f766e, 0 0 6px rgba(45,212,191,0.7);
     }
 
     .small {
       padding: 8px 14px;
-      font-size: 12px;
+      font-size: 11px;
     }
 
     .info {
       font-size: 12px;
       opacity: 0.7;
       margin-top: 14px;
+      max-width: 460px;
+    }
+
+    .legend {
+      font-size: 11px;
+      opacity: 0.75;
+      margin-top: 8px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.85);
+      border: 1px solid rgba(148,163,184,0.5);
+      margin: 2px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot.jump {
+      background: radial-gradient(circle,#facc15,#f97316);
+      box-shadow: 0 0 8px rgba(251,191,36,0.9);
+    }
+
+    .dot.shield {
+      background: radial-gradient(circle,#38bdf8,#22d3ee);
+      box-shadow: 0 0 8px rgba(56,189,248,0.9);
     }
   </style>
 </head>
@@ -120,8 +158,8 @@
 
     <!-- Main menu -->
     <div id="menuOverlay" class="overlay">
-      <h1>Mini Geometry Dash</h1>
-      <p>Select a level to begin. Jump over spikes and reach the end!</p>
+      <h1>Mini Geometry Runner</h1>
+      <p>Select a level to begin. Jump over spikes, grab power-ups, and reach the portal!</p>
       <h2>Levels</h2>
       <div class="level-buttons">
         <button data-level="0">Level 1</button>
@@ -131,8 +169,16 @@
         <button data-level="4">Level 5</button>
       </div>
       <div class="info">
-        Controls: Space / Click / Tap to jump. <br />
-        Reach the glowing portal at the end to win.
+        Controls: <b>Space</b> / <b>Click</b> / <b>Tap</b> to jump.
+        <br />Timing matters – hold for higher jumps over combos of spikes.
+      </div>
+      <div class="legend">
+        <div class="pill">
+          <span class="dot jump"></span> Jump Orb – auto super-jump
+        </div>
+        <div class="pill">
+          <span class="dot shield"></span> Shield Orb – survive one spike
+        </div>
       </div>
     </div>
 
@@ -150,7 +196,7 @@
     <!-- Game over -->
     <div id="gameOverOverlay" class="overlay hidden">
       <h2>Game Over</h2>
-      <p>You hit a spike! Try again.</p>
+      <p id="gameOverText">You hit a spike! Try again.</p>
       <div class="level-buttons">
         <button id="retryDeathBtn" class="small">Retry</button>
         <button id="menuDeathBtn" class="small">Menu</button>
@@ -165,6 +211,7 @@
     const menuOverlay = document.getElementById("menuOverlay");
     const completeOverlay = document.getElementById("completeOverlay");
     const gameOverOverlay = document.getElementById("gameOverOverlay");
+    const gameOverText = document.getElementById("gameOverText");
 
     const completeText = document.getElementById("completeText");
     const nextLevelBtn = document.getElementById("nextLevelBtn");
@@ -190,153 +237,190 @@
       height: PLAYER_SIZE,
       vy: 0,
       onGround: true,
-      color: "#00ffc8"
+      color: "#22d3ee"
     };
 
-    // Level definitions: speed, length, spikes at (x, height), background colors
+    let cameraX = 0;
+
+    // Trail for pretty effect
+    const trail = [];
+
+    // Power-up/effect state
+    const effects = {
+      shield: false,
+      shieldFlash: 0
+    };
+
+    // Level definitions (easier speeds + spikeScale to make spikes shorter)
     const levels = [
       {
-        name: "Warmup Plains",
-        speed: 4.0,
+        name: "Neon Warmup",
+        speed: 3.5,
         gravity: 0.6,
-        jumpForce: 12,
-        length: 2500,
-        bg1: "#1b2340",
-        bg2: "#060912",
-        floorColor: "#273047",
-        spikeColor: "#ff3163",
-        portalColor: "#00ff88",
+        jumpForce: 12.5,
+        length: 2300,
+        spikeScale: 0.6,
+        bg1: "#0f172a",
+        bg2: "#020617",
+        floorColor: "#1f2937",
+        spikeColor: "#f97316",
+        portalColor: "#22c55e",
         spikes: [
-          { x: 500, h: 50 },
-          { x: 650, h: 70 },
-          { x: 800, h: 60 },
-          { x: 1050, h: 80 },
-          { x: 1320, h: 70 },
-          { x: 1600, h: 90 },
-          { x: 1900, h: 60 }
+          { x: 500, h: 55 },
+          { x: 700, h: 70 },
+          { x: 950, h: 70 },
+          { x: 1250, h: 80 },
+          { x: 1550, h: 70 },
+          { x: 1850, h: 80 }
+        ],
+        powerups: [
+          { x: 640, type: "jump", used: false },
+          { x: 1400, type: "shield", used: false }
         ]
       },
       {
         name: "Spike Alley",
-        speed: 5.0,
-        gravity: 0.7,
+        speed: 4.2,
+        gravity: 0.65,
         jumpForce: 13,
-        length: 2900,
-        bg1: "#261b40",
-        bg2: "#0b0317",
-        floorColor: "#3a294f",
-        spikeColor: "#ffb14a",
-        portalColor: "#3dfffc",
+        length: 2700,
+        spikeScale: 0.7,
+        bg1: "#1e1b4b",
+        bg2: "#020617",
+        floorColor: "#312e81",
+        spikeColor: "#facc15",
+        portalColor: "#38bdf8",
         spikes: [
-          { x: 450, h: 80 },
-          { x: 600, h: 80 },
-          { x: 750, h: 80 },
-          { x: 900, h: 80 },
-          { x: 1200, h: 100 },
-          { x: 1350, h: 70 },
-          { x: 1550, h: 90 },
-          { x: 1750, h: 60 },
+          { x: 520, h: 70 },
+          { x: 700, h: 70 },
+          { x: 880, h: 70 },
+          { x: 1150, h: 90 },
+          { x: 1350, h: 80 },
+          { x: 1600, h: 90 },
           { x: 1900, h: 80 },
-          { x: 2300, h: 90 }
+          { x: 2200, h: 90 }
+        ],
+        powerups: [
+          { x: 630, type: "jump", used: false },
+          { x: 1500, type: "shield", used: false },
+          { x: 2050, type: "jump", used: false }
         ]
       },
       {
         name: "Neon Caverns",
-        speed: 5.5,
+        speed: 4.7,
         gravity: 0.7,
-        jumpForce: 13,
-        length: 3200,
-        bg1: "#042d3b",
-        bg2: "#02070a",
-        floorColor: "#074356",
-        spikeColor: "#ff4ad8",
-        portalColor: "#f5ff3a",
+        jumpForce: 13.2,
+        length: 3100,
+        spikeScale: 0.75,
+        bg1: "#082f49",
+        bg2: "#020617",
+        floorColor: "#0f766e",
+        spikeColor: "#fb7185",
+        portalColor: "#f9a8d4",
         spikes: [
-          { x: 550, h: 60 },
-          { x: 700, h: 110 },
-          { x: 880, h: 80 },
-          { x: 1100, h: 70 },
-          { x: 1300, h: 110 },
-          { x: 1600, h: 90 },
-          { x: 1750, h: 70 },
-          { x: 1950, h: 110 },
-          { x: 2200, h: 75 },
-          { x: 2450, h: 90 },
-          { x: 2700, h: 90 }
+          { x: 580, h: 80 },
+          { x: 820, h: 70 },
+          { x: 1080, h: 100 },
+          { x: 1380, h: 85 },
+          { x: 1650, h: 95 },
+          { x: 1900, h: 85 },
+          { x: 2150, h: 100 },
+          { x: 2450, h: 85 },
+          { x: 2750, h: 95 }
+        ],
+        powerups: [
+          { x: 760, type: "jump", used: false },
+          { x: 1280, type: "shield", used: false },
+          { x: 2050, type: "jump", used: false }
         ]
       },
       {
         name: "Velocity Run",
-        speed: 6.2,
+        speed: 5.2,
         gravity: 0.75,
         jumpForce: 13.5,
-        length: 3600,
-        bg1: "#382309",
-        bg2: "#090201",
-        floorColor: "#4e3110",
-        spikeColor: "#39ffb5",
-        portalColor: "#ff3b3b",
+        length: 3400,
+        spikeScale: 0.8,
+        bg1: "#451a03",
+        bg2: "#020617",
+        floorColor: "#78350f",
+        spikeColor: "#4ade80",
+        portalColor: "#22d3ee",
         spikes: [
-          { x: 500, h: 90 },
-          { x: 650, h: 110 },
-          { x: 800, h: 80 },
-          { x: 950, h: 90 },
-          { x: 1180, h: 120 },
-          { x: 1450, h: 80 },
-          { x: 1600, h: 110 },
-          { x: 1900, h: 90 },
-          { x: 2150, h: 70 },
-          { x: 2400, h: 120 },
-          { x: 2700, h: 80 },
-          { x: 2950, h: 120 },
-          { x: 3200, h: 90 }
+          { x: 520, h: 85 },
+          { x: 750, h: 95 },
+          { x: 1000, h: 80 },
+          { x: 1300, h: 105 },
+          { x: 1600, h: 95 },
+          { x: 1900, h: 110 },
+          { x: 2200, h: 90 },
+          { x: 2500, h: 105 },
+          { x: 2800, h: 95 }
+        ],
+        powerups: [
+          { x: 680, type: "shield", used: false },
+          { x: 1180, type: "jump", used: false },
+          { x: 2050, type: "jump", used: false },
+          { x: 2350, type: "shield", used: false }
         ]
       },
       {
         name: "Final Rush",
-        speed: 7.1,
+        speed: 5.7,
         gravity: 0.78,
         jumpForce: 14,
-        length: 4000,
-        bg1: "#2b003b",
-        bg2: "#050006",
-        floorColor: "#3d0755",
-        spikeColor: "#fffb3a",
-        portalColor: "#00ffea",
+        length: 3800,
+        spikeScale: 0.8,
+        bg1: "#4c1d95",
+        bg2: "#020617",
+        floorColor: "#6d28d9",
+        spikeColor: "#feea2b",
+        portalColor: "#22d3ee",
         spikes: [
-          { x: 450, h: 90 },
-          { x: 650, h: 110 },
-          { x: 820, h: 80 },
-          { x: 1000, h: 120 },
-          { x: 1200, h: 90 },
-          { x: 1450, h: 70 },
-          { x: 1650, h: 110 },
-          { x: 1900, h: 100 },
-          { x: 2150, h: 80 },
-          { x: 2400, h: 110 },
-          { x: 2650, h: 130 },
-          { x: 2900, h: 90 },
-          { x: 3150, h: 120 },
-          { x: 3400, h: 80 },
-          { x: 3650, h: 110 }
+          { x: 560, h: 90 },
+          { x: 820, h: 100 },
+          { x: 1100, h: 95 },
+          { x: 1400, h: 110 },
+          { x: 1700, h: 95 },
+          { x: 2000, h: 115 },
+          { x: 2300, h: 90 },
+          { x: 2600, h: 115 },
+          { x: 2900, h: 100 },
+          { x: 3200, h: 95 },
+          { x: 3500, h: 110 }
+        ],
+        powerups: [
+          { x: 720, type: "shield", used: false },
+          { x: 1220, type: "jump", used: false },
+          { x: 1880, type: "jump", used: false },
+          { x: 2450, type: "shield", used: false },
+          { x: 3050, type: "jump", used: false }
         ]
       }
     ];
 
-    let cameraX = 0;
-
-    function resetPlayerForLevel(level) {
+    function resetLevelState(level) {
       player.x = 120;
       player.y = GROUND_Y - PLAYER_SIZE;
       player.vy = 0;
       player.onGround = true;
       cameraX = 0;
       levelTimer = 0;
+      trail.length = 0;
+      effects.shield = false;
+      effects.shieldFlash = 0;
+      if (level.powerups) {
+        for (const p of level.powerups) {
+          p.used = false;
+        }
+      }
     }
 
     function startLevel(index) {
       currentLevelIndex = index;
-      resetPlayerForLevel(levels[index]);
+      const level = levels[index];
+      resetLevelState(level);
       gameState = "playing";
       hideOverlay(menuOverlay);
       hideOverlay(completeOverlay);
@@ -411,7 +495,6 @@
       tryJump();
     }, { passive: false });
 
-    // Simple AABB rectangle collision
     function rectIntersect(a, b) {
       return (
         a.x < b.x + b.width &&
@@ -430,7 +513,7 @@
         // Horizontal auto-run
         player.x += level.speed;
 
-        // Gravity
+        // Gravity & vertical movement
         player.vy += level.gravity;
         player.y += player.vy;
 
@@ -442,27 +525,71 @@
         }
 
         // Camera follows player
-        const targetCam = player.x - 200;
-        cameraX += (targetCam - cameraX) * 0.1;
+        const targetCam = player.x - 220;
+        cameraX += (targetCam - cameraX) * 0.12;
 
-        // Check spikes
+        // Trail
+        trail.push({ x: player.x, y: player.y });
+        if (trail.length > 22) trail.shift();
+
+        // Powerups
+        const playerRectWorld = {
+          x: player.x,
+          y: player.y,
+          width: player.width,
+          height: player.height
+        };
+
+        if (level.powerups) {
+          for (const power of level.powerups) {
+            if (power.used) continue;
+            const orbRect = {
+              x: power.x - 18,
+              y: GROUND_Y - 70,
+              width: 36,
+              height: 36
+            };
+            if (rectIntersect(playerRectWorld, orbRect)) {
+              power.used = true;
+              if (power.type === "jump") {
+                // Super jump
+                player.vy = -level.jumpForce * 1.3;
+                player.onGround = false;
+              } else if (power.type === "shield") {
+                effects.shield = true;
+                effects.shieldFlash = 20;
+              }
+            }
+          }
+        }
+
+        // Spikes
+        const spikeScale = level.spikeScale || 1;
+        let hitSpike = false;
+
         for (const spike of level.spikes) {
+          const h = spike.h * spikeScale;
           const spikeRect = {
-            x: spike.x - cameraX,
-            y: GROUND_Y - spike.h,
+            x: spike.x,
+            y: GROUND_Y - h,
             width: 35,
-            height: spike.h
+            height: h
           };
-          const playerRect = {
-            x: player.x - cameraX,
-            y: player.y,
-            width: player.width,
-            height: player.height
-          };
-          if (rectIntersect(playerRect, spikeRect)) {
-            gameState = "dead";
-            showOverlay(gameOverOverlay);
+          if (rectIntersect(playerRectWorld, spikeRect)) {
+            hitSpike = true;
             break;
+          }
+        }
+
+        if (hitSpike) {
+          if (effects.shield) {
+            // Use up shield instead of dying
+            effects.shield = false;
+            effects.shieldFlash = 25;
+          } else {
+            gameState = "dead";
+            gameOverText.textContent = "You hit a spike! Power-ups can help you clear tricky parts.";
+            showOverlay(gameOverOverlay);
           }
         }
 
@@ -473,47 +600,83 @@
           showOverlay(completeOverlay);
         }
 
-        // Fail-safe: if you fall off world
+        // Fail-safe: fall off world
         if (player.y > HEIGHT + 200) {
           gameState = "dead";
+          gameOverText.textContent = "You fell off the level! Stay on the platform.";
           showOverlay(gameOverOverlay);
+        }
+
+        if (effects.shieldFlash > 0) {
+          effects.shieldFlash--;
         }
       }
     }
 
     function drawBackground(level) {
-      // Gradient background
+      // Gradient base
       const grd = ctx.createLinearGradient(0, 0, 0, HEIGHT);
       grd.addColorStop(0, level.bg1);
       grd.addColorStop(1, level.bg2);
       ctx.fillStyle = grd;
       ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
+      // Parallax bars
+      ctx.save();
+      ctx.globalAlpha = 0.4;
+      for (let i = 0; i < 14; i++) {
+        const x = ((i * 180) - cameraX * 0.35) % (WIDTH + 220) - 80;
+        const h = 80 + ((i * 37) % 140);
+        const y = HEIGHT - h - 120;
+        ctx.fillStyle = i % 2 === 0 ? "rgba(15,23,42,0.9)" : "rgba(30,64,175,0.5)";
+        ctx.fillRect(x, y, 40, h);
+      }
+      ctx.restore();
+
       // Stars
-      ctx.fillStyle = "rgba(255,255,255,0.15)";
-      for (let i = 0; i < 40; i++) {
-        const x = (i * 200 - cameraX * 0.2) % (WIDTH + 200) - 100;
-        const y = (i * 83) % (HEIGHT - 200) + 30;
+      ctx.fillStyle = "rgba(248,250,252,0.20)";
+      for (let i = 0; i < 38; i++) {
+        const x = (i * 200 - cameraX * 0.18) % (WIDTH + 200) - 100;
+        const y = (i * 83) % (HEIGHT - 200) + 20;
         ctx.fillRect(x, y, 2, 2);
       }
     }
 
     function drawLevel() {
       const level = levels[currentLevelIndex];
-
       drawBackground(level);
 
-      // Ground
-      ctx.fillStyle = level.floorColor;
+      // Ground with gradient
+      const floorGrad = ctx.createLinearGradient(0, GROUND_Y, 0, HEIGHT);
+      floorGrad.addColorStop(0, level.floorColor);
+      floorGrad.addColorStop(1, "#020617");
+      ctx.fillStyle = floorGrad;
       ctx.fillRect(0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y);
 
+      // Ground glow line
+      ctx.strokeStyle = "rgba(148,163,184,0.4)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, GROUND_Y + 0.5);
+      ctx.lineTo(WIDTH, GROUND_Y + 0.5);
+      ctx.stroke();
+
+      const spikeScale = level.spikeScale || 1;
+
       // Spikes
+      ctx.save();
+      ctx.shadowColor = level.spikeColor;
+      ctx.shadowBlur = 20;
       ctx.fillStyle = level.spikeColor;
+
       for (const spike of level.spikes) {
+        const h = spike.h * spikeScale;
         const baseX = spike.x - cameraX;
         const baseY = GROUND_Y;
         const spikeWidth = 35;
-        const spikeHeight = spike.h;
+        const spikeHeight = h;
+
+        if (baseX + spikeWidth < -50 || baseX > WIDTH + 50) continue;
 
         ctx.beginPath();
         ctx.moveTo(baseX, baseY);
@@ -521,6 +684,66 @@
         ctx.lineTo(baseX + spikeWidth, baseY);
         ctx.closePath();
         ctx.fill();
+      }
+      ctx.restore();
+
+      // Powerups
+      if (level.powerups) {
+        for (const power of level.powerups) {
+          if (power.used) continue;
+          const screenX = power.x - cameraX;
+          const screenY = GROUND_Y - 52;
+
+          if (screenX < -40 || screenX > WIDTH + 40) continue;
+
+          ctx.save();
+          const t = performance.now() / 400;
+          const bob = Math.sin(t + power.x * 0.001) * 4;
+
+          ctx.translate(screenX, screenY + bob);
+          ctx.shadowBlur = 18;
+
+          if (power.type === "jump") {
+            ctx.shadowColor = "#facc15";
+            const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, 18);
+            grad.addColorStop(0, "#fef3c7");
+            grad.addColorStop(1, "#f97316");
+            ctx.fillStyle = grad;
+          } else if (power.type === "shield") {
+            ctx.shadowColor = "#38bdf8";
+            const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, 18);
+            grad.addColorStop(0, "#e0f2fe");
+            grad.addColorStop(1, "#22d3ee");
+            ctx.fillStyle = grad;
+          }
+
+          ctx.beginPath();
+          ctx.arc(0, 0, 16, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Simple icon
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = "rgba(15,23,42,0.9)";
+          if (power.type === "jump") {
+            ctx.beginPath();
+            ctx.moveTo(-4, 5);
+            ctx.lineTo(0, -6);
+            ctx.lineTo(4, 5);
+            ctx.closePath();
+            ctx.fill();
+          } else if (power.type === "shield") {
+            ctx.beginPath();
+            ctx.moveTo(0, -6);
+            ctx.lineTo(7, -1);
+            ctx.lineTo(4, 7);
+            ctx.lineTo(-4, 7);
+            ctx.lineTo(-7, -1);
+            ctx.closePath();
+            ctx.fill();
+          }
+
+          ctx.restore();
+        }
       }
 
       // Finish portal
@@ -531,47 +754,104 @@
 
       ctx.save();
       ctx.translate(portalX + portalWidth / 2, portalY + portalHeight / 2);
-      const pulse = Math.sin(performance.now() / 200) * 0.2 + 1;
+      const pulse = Math.sin(performance.now() / 200) * 0.2 + 1.05;
       ctx.scale(pulse, pulse);
 
-      const portalGrad = ctx.createLinearGradient(-portalWidth/2, 0, portalWidth/2, portalHeight);
-      portalGrad.addColorStop(0, "rgba(255,255,255,0.8)");
+      ctx.shadowColor = level.portalColor;
+      ctx.shadowBlur = 25;
+
+      const portalGrad = ctx.createLinearGradient(-portalWidth/2, -portalHeight/2, portalWidth/2, portalHeight/2);
+      portalGrad.addColorStop(0, "rgba(248,250,252,0.9)");
       portalGrad.addColorStop(1, level.portalColor);
       ctx.fillStyle = portalGrad;
       ctx.fillRect(-portalWidth/2, -portalHeight/2, portalWidth, portalHeight);
 
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "rgba(15,23,42,0.8)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-portalWidth/2, -portalHeight/2, portalWidth, portalHeight);
+      ctx.restore();
+
+      // Player trail
+      ctx.save();
+      for (let i = 0; i < trail.length; i++) {
+        const pos = trail[i];
+        const alpha = i / trail.length;
+        const size = PLAYER_SIZE * (0.7 + alpha * 0.2);
+        const tx = pos.x - cameraX + PLAYER_SIZE / 2;
+        const ty = pos.y + PLAYER_SIZE / 2;
+
+        ctx.globalAlpha = alpha * 0.4;
+        ctx.fillStyle = "#22d3ee";
+        ctx.beginPath();
+        ctx.roundRect(tx - size/2, ty - size/2, size, size, 4);
+        ctx.fill();
+      }
       ctx.restore();
 
       // Player
       const px = player.x - cameraX;
       const py = player.y;
+
       ctx.save();
       ctx.translate(px + player.width / 2, py + player.height / 2);
-      const rotation = (player.onGround ? 0 : (player.x / 15) % (Math.PI * 2));
+      const rotation = (player.onGround ? 0 : (player.x / 18) % (Math.PI * 2));
       ctx.rotate(rotation);
-      ctx.fillStyle = player.color;
-      ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
+
+      ctx.shadowColor = effects.shield ? "#38bdf8" : "#22d3ee";
+      ctx.shadowBlur = effects.shield ? 30 : 18;
+
+      let baseColor = player.color;
+      if (effects.shieldFlash > 0 && effects.shield) {
+        baseColor = "#e0f2fe";
+      }
+
+      ctx.fillStyle = baseColor;
+      ctx.beginPath();
+      ctx.roundRect(-player.width / 2, -player.height / 2, player.width, player.height, 6);
+      ctx.fill();
+
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "rgba(15,23,42,0.85)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
       ctx.restore();
 
       // HUD
-      ctx.fillStyle = "rgba(0,0,0,0.4)";
-      ctx.fillRect(15, 15, 240, 58);
+      ctx.fillStyle = "rgba(15,23,42,0.7)";
+      ctx.fillRect(15, 15, 260, 64);
+      ctx.strokeStyle = "rgba(148,163,184,0.6)";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(15, 15, 260, 64);
 
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "16px system-ui";
-      ctx.fillText(`Level ${currentLevelIndex + 1}: ${level.name}`, 28, 40);
+      ctx.fillStyle = "#e5e7eb";
+      ctx.font = "15px system-ui";
+      ctx.fillText(`Level ${currentLevelIndex + 1}: ${level.name}`, 28, 38);
 
       const progress = Math.min(player.x / level.length, 1);
-      ctx.fillStyle = "rgba(255,255,255,0.15)";
-      ctx.fillRect(28, 46, 200, 8);
-      ctx.fillStyle = "#00ffc8";
-      ctx.fillRect(28, 46, 200 * progress, 8);
+      ctx.fillStyle = "rgba(148,163,184,0.3)";
+      ctx.fillRect(28, 44, 200, 8);
+      ctx.fillStyle = "#22d3ee";
+      ctx.fillRect(28, 44, 200 * progress, 8);
+
+      ctx.font = "11px system-ui";
+      ctx.fillStyle = "#9ca3af";
+      ctx.fillText(`Time: ${levelTimer.toFixed(1)}s`, 28, 62);
+
+      if (effects.shield) {
+        ctx.fillStyle = "#38bdf8";
+        ctx.beginPath();
+        ctx.arc(230, 52, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#e5e7eb";
+        ctx.fillText("Shield", 245, 56);
+      }
     }
 
     function render() {
       if (gameState === "menu") {
-        // Dimmed background in menu
-        ctx.fillStyle = "#050711";
+        ctx.fillStyle = "#020617";
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
       } else {
         drawLevel();
