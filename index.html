@@ -1,986 +1,744 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Neon Dash</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Passing Through Town: Bloomington Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-    body {
-      background: radial-gradient(circle at top, #020617, #000);
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #e5e7eb;
-    }
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #222;
+            font-family: 'Press Start 2P', cursive;
+            touch-action: none; /* Prevent zoom on mobile */
+        }
 
-    #gameContainer {
-      position: relative;
-      width: 900px;
-      height: 500px;
-      border-radius: 24px;
-      overflow: hidden;
-      background: radial-gradient(circle at top, #020617, #000014);
-      box-shadow: 0 28px 60px rgba(0,0,0,0.95);
-      border: 1px solid rgba(148,163,184,0.4);
-    }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(to bottom, #87CEEB, #E0F7FA);
+        }
 
-    #gameCanvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-      background: #020617;
-    }
+        canvas {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
 
-    .overlay {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle at top, rgba(15,23,42,0.9), rgba(15,23,42,0.98));
-      text-align: center;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-    }
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+        }
 
-    .hidden {
-      display: none !important;
-    }
+        .score-board {
+            font-size: 40px;
+            color: white;
+            text-shadow: 4px 4px 0px #7D110C; /* Crimson Shadow */
+            text-align: left;
+        }
 
-    h1 {
-      font-size: 40px;
-      margin-bottom: 8px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      text-shadow: 0 0 16px rgba(56,189,248,0.9);
-    }
+        #start-screen, #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            pointer-events: auto;
+            z-index: 10;
+        }
 
-    h2 {
-      font-size: 28px;
-      margin-bottom: 4px;
-      text-shadow: 0 0 12px rgba(250,250,250,0.9);
-    }
+        h1 {
+            color: #F3E5AB; /* Cream */
+            text-shadow: 4px 4px 0px #7D110C; /* Crimson */
+            text-align: center;
+            line-height: 1.5;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
 
-    p {
-      opacity: 0.9;
-      margin-bottom: 18px;
-    }
+        p {
+            font-size: 14px;
+            color: #ddd;
+            text-align: center;
+            line-height: 1.6;
+            max-width: 600px;
+        }
 
-    .level-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-      margin-top: 10px;
-    }
+        button {
+            margin-top: 30px;
+            padding: 15px 30px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            background-color: #7D110C; /* Crimson */
+            color: #F3E5AB; /* Cream */
+            border: 4px solid #fff;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 6px 0 #4a0a07;
+            transition: transform 0.1s;
+        }
 
-    button {
-      border: none;
-      padding: 10px 18px;
-      border-radius: 999px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      background: linear-gradient(135deg,#22c55e,#22d3ee);
-      color: #020617;
-      box-shadow: 0 4px 0 #0f766e, 0 0 14px rgba(45,212,191,0.9);
-      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.12s ease;
-    }
+        button:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #4a0a07;
+        }
 
-    button:hover {
-      filter: brightness(1.1);
-    }
+        .hidden {
+            display: none !important;
+        }
 
-    button:active {
-      transform: translateY(2px) scale(0.98);
-      box-shadow: 0 2px 0 #0f766e, 0 0 9px rgba(45,212,191,0.9);
-    }
-
-    .small {
-      padding: 8px 14px;
-      font-size: 11px;
-    }
-
-    .info {
-      font-size: 12px;
-      opacity: 0.75;
-      margin-top: 14px;
-      max-width: 460px;
-    }
-
-    .legend {
-      font-size: 11px;
-      opacity: 0.8;
-      margin-top: 8px;
-      max-width: 460px;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: rgba(15,23,42,0.85);
-      border: 1px solid rgba(148,163,184,0.5);
-      margin: 3px;
-    }
-
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-    }
-
-    .dot.jump {
-      background: radial-gradient(circle,#facc15,#f97316);
-      box-shadow: 0 0 8px rgba(251,191,36,0.9);
-    }
-
-    .dot.shield {
-      background: radial-gradient(circle,#38bdf8,#22d3ee);
-      box-shadow: 0 0 8px rgba(56,189,248,0.9);
-    }
-
-    .dot.pad {
-      background: radial-gradient(circle,#a3e635,#4ade80);
-      box-shadow: 0 0 8px rgba(132,204,22,0.9);
-    }
-  </style>
+        /* Mobile Controls Hints */
+        .controls-hint {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255,255,255,0.7);
+            font-size: 10px;
+            pointer-events: none;
+        }
+    </style>
 </head>
 <body>
-  <div id="gameContainer">
-    <canvas id="gameCanvas" width="900" height="500"></canvas>
 
-    <!-- Main menu -->
-    <div id="menuOverlay" class="overlay">
-      <h1>Neon Dash</h1>
-      <p>Dash forward, time your jumps, hit orbs & pads, and reach the portal.</p>
-      <h2>Levels</h2>
-      <div class="level-buttons">
-        <button data-level="0">Level 1</button>
-        <button data-level="1">Level 2</button>
-        <button data-level="2">Level 3</button>
-        <button data-level="3">Level 4</button>
-        <button data-level="4">Level 5</button>
-      </div>
-      <div class="info">
-        Controls: <b>Space</b> / <b>Click</b> / <b>Tap</b> to jump.<br />
-        Hold a little longer for higher jumps. You auto-run like in Geometry Dash.
-      </div>
-      <div class="legend">
-        <div class="pill">
-          <span class="dot pad"></span> Green Pad – big jump when you land on it
-        </div>
-        <div class="pill">
-          <span class="dot jump"></span> Yellow Orb – big jump if you tap while inside it
-        </div>
-        <div class="pill">
-          <span class="dot shield"></span> Blue Orb – one-hit shield
-        </div>
-      </div>
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="ui-layer">
+        <div class="score-board" id="score-display">0</div>
     </div>
 
-    <!-- Level complete -->
-    <div id="completeOverlay" class="overlay hidden">
-      <h2>Level Complete!</h2>
-      <p id="completeText"></p>
-      <div class="level-buttons">
-        <button id="nextLevelBtn" class="small">Next Level</button>
-        <button id="retryLevelBtn" class="small">Replay</button>
-        <button id="backToMenuBtn" class="small">Menu</button>
-      </div>
+    <div id="start-screen">
+        <h1>PASSING THROUGH<br>TOWN</h1>
+        <p>Welcome to Bloomington.<br>Get to class without getting hit by the Campus Bus or falling into the Jordan River.</p>
+        <p style="color: #F3E5AB; margin-top:10px;">Arrow Keys / WASD to Move</p>
+        <button onclick="startGame()">Start Game</button>
     </div>
 
-    <!-- Game over -->
-    <div id="gameOverOverlay" class="overlay hidden">
-      <h2>Game Over</h2>
-      <p id="gameOverText">You hit a spike! Try again.</p>
-      <div class="level-buttons">
-        <button id="retryDeathBtn" class="small">Retry</button>
-        <button id="menuDeathBtn" class="small">Menu</button>
-      </div>
+    <div id="game-over-screen" class="hidden">
+        <h1>BUMMER!</h1>
+        <p id="final-score-text">Score: 0</p>
+        <button onclick="resetGame()">Try Again</button>
     </div>
-  </div>
 
-  <script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
+    <div class="controls-hint">Tap screen or use Arrow Keys</div>
+</div>
 
-    const menuOverlay = document.getElementById("menuOverlay");
-    const completeOverlay = document.getElementById("completeOverlay");
-    const gameOverOverlay = document.getElementById("gameOverOverlay");
-    const gameOverText = document.getElementById("gameOverText");
-    const completeText = document.getElementById("completeText");
-
-    const nextLevelBtn = document.getElementById("nextLevelBtn");
-    const retryLevelBtn = document.getElementById("retryLevelBtn");
-    const backToMenuBtn = document.getElementById("backToMenuBtn");
-    const retryDeathBtn = document.getElementById("retryDeathBtn");
-    const menuDeathBtn = document.getElementById("menuDeathBtn");
-
-    const WIDTH = canvas.width;
-    const HEIGHT = canvas.height;
-    const GROUND_Y = HEIGHT - 90;
-    const PLAYER_SIZE = 28;
-
-    let gameState = "menu"; // "menu" | "playing" | "dead" | "complete"
-    let currentLevelIndex = 0;
-    let levelTimer = 0;
-
-    const player = {
-      x: 120,
-      y: GROUND_Y - PLAYER_SIZE,
-      width: PLAYER_SIZE,
-      height: PLAYER_SIZE,
-      vy: 0,
-      onGround: true,
-      coyoteFrames: 0,
-      color: "#22d3ee"
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Game Constants
+    const TILE_SIZE = 40;
+    const COLS = 13; // Must be odd to center player easily
+    const ROWS_VISIBLE = 15;
+    
+    // Bloomington Color Palette
+    const COLORS = {
+        crimson: '#7D110C',
+        cream: '#F3E5AB',
+        asphalt: '#333333',
+        grass: '#4A6B3E', // Darker forest green
+        grassLight: '#5C8A4E',
+        water: '#4FC3F7',
+        waterDeep: '#0288D1',
+        limestone: '#D8D8D6',
+        limestoneDark: '#A0A0A0',
+        treeTrunk: '#5D4037',
+        leavesOrange: '#E65100',
+        leavesRed: '#B71C1C',
+        leavesYellow: '#FBC02D'
     };
 
-    let cameraX = 0;
-    const trail = [];
-    const effects = {
-      shield: false,
-      shieldFlash: 0
-    };
+    let width, height;
+    
+    // Game State
+    let gameActive = false;
+    let score = 0;
+    let lanes = [];
+    let player;
+    let frameCount = 0;
+    let cameraY = 0;
+    let gameSpeed = 0.002; // Initial camera creep speed
 
-    // Simple input state for orb timing
-    let jumpPressed = false;
-    let jumpJustPressed = false;
+    // Resize Logic
+    function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+    }
+    window.addEventListener('resize', resize);
+    resize();
 
-    // Levels with spikes, pads, and orbs
-    const levels = [
-      {
-        name: "Tutorial Lines",
-        speed: 3.4,
-        gravity: 0.55,
-        jumpForce: 12.5,
-        length: 2300,
-        spikeScale: 0.65,
-        bg1: "#020617",
-        bg2: "#020617",
-        floorColor: "#111827",
-        spikeColor: "#f97316",
-        portalColor: "#22c55e",
-        gridColor: "rgba(30,64,175,0.25)",
-        spikes: [
-          { x: 600, h: 70 },
-          { x: 900, h: 70 },
-          { x: 1250, h: 80 },
-          { x: 1600, h: 70 },
-          { x: 1900, h: 80 }
-        ],
-        pads: [
-          { x: 700, width: 60 },
-          { x: 1450, width: 60 }
-        ],
-        orbs: [
-          { x: 1150, type: "jump", used: false },
-          { x: 1750, type: "shield", used: false }
-        ]
-      },
-      {
-        name: "Neon Blocks",
-        speed: 4.0,
-        gravity: 0.6,
-        jumpForce: 13,
-        length: 2700,
-        spikeScale: 0.7,
-        bg1: "#020617",
-        bg2: "#020617",
-        floorColor: "#0f172a",
-        spikeColor: "#facc15",
-        portalColor: "#38bdf8",
-        gridColor: "rgba(79,70,229,0.3)",
-        spikes: [
-          { x: 580, h: 80 },
-          { x: 780, h: 80 },
-          { x: 1040, h: 95 },
-          { x: 1350, h: 90 },
-          { x: 1650, h: 90 },
-          { x: 1950, h: 95 },
-          { x: 2250, h: 90 }
-        ],
-        pads: [
-          { x: 650, width: 60 },
-          { x: 1500, width: 70 },
-          { x: 2100, width: 60 }
-        ],
-        orbs: [
-          { x: 1180, type: "jump", used: false },
-          { x: 1750, type: "shield", used: false },
-          { x: 2350, type: "jump", used: false }
-        ]
-      },
-      {
-        name: "Pulse Tunnel",
-        speed: 4.4,
-        gravity: 0.68,
-        jumpForce: 13.4,
-        length: 3100,
-        spikeScale: 0.75,
-        bg1: "#020617",
-        bg2: "#020617",
-        floorColor: "#064e3b",
-        spikeColor: "#fb7185",
-        portalColor: "#f9a8d4",
-        gridColor: "rgba(45,212,191,0.35)",
-        spikes: [
-          { x: 620, h: 85 },
-          { x: 880, h: 90 },
-          { x: 1180, h: 100 },
-          { x: 1480, h: 95 },
-          { x: 1780, h: 90 },
-          { x: 2080, h: 100 },
-          { x: 2420, h: 95 },
-          { x: 2740, h: 90 }
-        ],
-        pads: [
-          { x: 720, width: 60 },
-          { x: 1300, width: 70 },
-          { x: 1950, width: 70 },
-          { x: 2550, width: 70 }
-        ],
-        orbs: [
-          { x: 1040, type: "jump", used: false },
-          { x: 1620, type: "shield", used: false },
-          { x: 2220, type: "jump", used: false }
-        ]
-      },
-      {
-        name: "Velocity Grid",
-        speed: 4.9,
-        gravity: 0.72,
-        jumpForce: 13.8,
-        length: 3400,
-        spikeScale: 0.8,
-        bg1: "#020617",
-        bg2: "#020617",
-        floorColor: "#451a03",
-        spikeColor: "#4ade80",
-        portalColor: "#22d3ee",
-        gridColor: "rgba(234,179,8,0.35)",
-        spikes: [
-          { x: 580, h: 90 },
-          { x: 860, h: 100 },
-          { x: 1180, h: 95 },
-          { x: 1500, h: 105 },
-          { x: 1820, h: 100 },
-          { x: 2140, h: 110 },
-          { x: 2470, h: 95 },
-          { x: 2800, h: 110 },
-          { x: 3120, h: 95 }
-        ],
-        pads: [
-          { x: 700, width: 60 },
-          { x: 1380, width: 70 },
-          { x: 2050, width: 70 },
-          { x: 2620, width: 70 }
-        ],
-        orbs: [
-          { x: 1040, type: "jump", used: false },
-          { x: 1720, type: "shield", used: false },
-          { x: 2340, type: "jump", used: false },
-          { x: 2960, type: "jump", used: false }
-        ]
-      },
-      {
-        name: "Final Neon",
-        speed: 5.3,
-        gravity: 0.75,
-        jumpForce: 14.1,
-        length: 3800,
-        spikeScale: 0.8,
-        bg1: "#020617",
-        bg2: "#020617",
-        floorColor: "#4c1d95",
-        spikeColor: "#fef08a",
-        portalColor: "#22d3ee",
-        gridColor: "rgba(129,140,248,0.4)",
-        spikes: [
-          { x: 620, h: 90 },
-          { x: 900, h: 100 },
-          { x: 1200, h: 100 },
-          { x: 1500, h: 110 },
-          { x: 1800, h: 100 },
-          { x: 2100, h: 115 },
-          { x: 2400, h: 95 },
-          { x: 2700, h: 115 },
-          { x: 3000, h: 100 },
-          { x: 3300, h: 110 },
-          { x: 3600, h: 100 }
-        ],
-        pads: [
-          { x: 740, width: 60 },
-          { x: 1380, width: 70 },
-          { x: 1980, width: 70 },
-          { x: 2520, width: 70 },
-          { x: 3180, width: 70 }
-        ],
-        orbs: [
-          { x: 1120, type: "jump", used: false },
-          { x: 1680, type: "shield", used: false },
-          { x: 2220, type: "jump", used: false },
-          { x: 2820, type: "jump", used: false },
-          { x: 3420, type: "shield", used: false }
-        ]
-      }
-    ];
+    // ---------------------------------------------------------
+    // Pseudo-3D Drawing Helpers
+    // ---------------------------------------------------------
+    
+    // Draw a "Cube" (Voxel style)
+    function drawCube(x, y, z, w, h, d, color, faceColor = null) {
+        // Isometric-ish projection: 
+        // We are looking from an angle. 
+        // x, y are grid coords. z is height off ground.
+        
+        // Convert grid to screen
+        // Center the grid on screen
+        const screenX = (width / 2) + (x - COLS/2) * TILE_SIZE;
+        // Camera offset handled in main loop by shifting everything down
+        const screenY = (height / 2 + 100) - (y * TILE_SIZE * 0.8) + cameraY * TILE_SIZE * 0.8; 
 
-    function resetLevelState(level) {
-      player.x = 120;
-      player.y = GROUND_Y - PLAYER_SIZE;
-      player.vy = 0;
-      player.onGround = true;
-      player.coyoteFrames = 0;
-      cameraX = 0;
-      levelTimer = 0;
-      trail.length = 0;
-      effects.shield = false;
-      effects.shieldFlash = 0;
-      if (level.orbs) {
-        for (const o of level.orbs) o.used = false;
-      }
+        // Adjust for Z (jump height or object height)
+        const renderY = screenY - z;
+        
+        const size = TILE_SIZE;
+
+        // Draw Side (Depth) - Makes it look 3D
+        ctx.fillStyle = shadeColor(color, -20); // Darker version
+        ctx.fillRect(screenX, renderY + size - d, w * size, d);
+
+        // Draw Top
+        ctx.fillStyle = faceColor || color;
+        ctx.fillRect(screenX, renderY - d, w * size, size); // The top face
+
+        // Optional: Right side shadow for extra depth
+        ctx.fillStyle = shadeColor(color, -40);
+        ctx.beginPath();
+        ctx.moveTo(screenX + w*size, renderY - d);
+        ctx.lineTo(screenX + w*size, renderY - d + size);
+        ctx.lineTo(screenX + w*size + (d/2), renderY - d + size - (d/2)); // Fake perspective
+        ctx.lineTo(screenX + w*size + (d/2), renderY - (d/2) - d);
+        ctx.fill();
     }
 
-    function startLevel(index) {
-      currentLevelIndex = index;
-      resetLevelState(levels[index]);
-      gameState = "playing";
-      hideOverlay(menuOverlay);
-      hideOverlay(completeOverlay);
-      hideOverlay(gameOverOverlay);
+    // Helper to darken colors
+    function shadeColor(color, percent) {
+        let R = parseInt(color.substring(1,3),16);
+        let G = parseInt(color.substring(3,5),16);
+        let B = parseInt(color.substring(5,7),16);
+
+        R = parseInt(R * (100 + percent) / 100);
+        G = parseInt(G * (100 + percent) / 100);
+        B = parseInt(B * (100 + percent) / 100);
+
+        R = (R<255)?R:255;  
+        G = (G<255)?G:255;  
+        B = (B<255)?B:255;  
+
+        const RR = ((R.toString(16).length==1)?"0"+R.toString(16):R.toString(16));
+        const GG = ((G.toString(16).length==1)?"0"+G.toString(16):G.toString(16));
+        const BB = ((B.toString(16).length==1)?"0"+B.toString(16):B.toString(16));
+
+        return "#"+RR+GG+BB;
     }
 
-    function showOverlay(el) { el.classList.remove("hidden"); }
-    function hideOverlay(el) { el.classList.add("hidden"); }
+    // ---------------------------------------------------------
+    // Classes
+    // ---------------------------------------------------------
 
-    // Menu buttons
-    document.querySelectorAll("#menuOverlay button[data-level]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const i = Number(btn.getAttribute("data-level"));
-        startLevel(i);
-      });
-    });
+    class Player {
+        constructor() {
+            this.gridX = Math.floor(COLS / 2);
+            this.gridY = 0; // Starting row
+            this.z = 0; // Height (for jumping)
+            this.isMoving = false;
+            this.moveProgress = 0;
+            this.targetX = this.gridX;
+            this.targetY = this.gridY;
+            this.startX = this.gridX;
+            this.startY = this.gridY;
+            this.direction = 'up'; // for sprite orientation
+            this.width = 0.6;
+        }
 
-    nextLevelBtn.addEventListener("click", () => {
-      const next = Math.min(currentLevelIndex + 1, levels.length - 1);
-      startLevel(next);
-    });
-    retryLevelBtn.addEventListener("click", () => startLevel(currentLevelIndex));
-    backToMenuBtn.addEventListener("click", () => {
-      gameState = "menu";
-      showOverlay(menuOverlay);
-      hideOverlay(completeOverlay);
-      hideOverlay(gameOverOverlay);
-    });
-    retryDeathBtn.addEventListener("click", () => startLevel(currentLevelIndex));
-    menuDeathBtn.addEventListener("click", () => {
-      gameState = "menu";
-      showOverlay(menuOverlay);
-      hideOverlay(completeOverlay);
-      hideOverlay(gameOverOverlay);
-    });
+        move(dx, dy) {
+            if (this.isMoving) return;
+            
+            const nextX = this.gridX + dx;
+            const nextY = this.gridY + dy;
 
-    // Input
-    function setJumpPressed(val) {
-      if (val && !jumpPressed) jumpJustPressed = true;
-      jumpPressed = val;
+            // Boundary checks
+            if (nextX < 0 || nextX >= COLS) return;
+            if (nextY < this.gridY && dy < 0) return; // Can't go too far back
+
+            // Check for obstacles (Trees/Limestone Pillars)
+            let lane = lanes.find(l => l.index === nextY);
+            if (lane) {
+                if (lane.obstacles[nextX]) return; // Blocked
+            }
+
+            this.startX = this.gridX;
+            this.startY = this.gridY;
+            this.targetX = nextX;
+            this.targetY = nextY;
+            this.isMoving = true;
+            this.moveProgress = 0;
+
+            if (dy > 0) this.direction = 'up';
+            if (dy < 0) this.direction = 'down';
+            if (dx > 0) this.direction = 'right';
+            if (dx < 0) this.direction = 'left';
+
+            // Score update
+            if (nextY > score) {
+                score = nextY;
+                document.getElementById('score-display').innerText = score;
+            }
+        }
+
+        update() {
+            if (this.isMoving) {
+                this.moveProgress += 0.15; // Speed of hop
+                
+                if (this.moveProgress >= 1) {
+                    this.isMoving = false;
+                    this.gridX = this.targetX;
+                    this.gridY = this.targetY;
+                    this.z = 0;
+                    checkCollision(); // Check immediately on land
+                } else {
+                    // Interpolate position
+                    // Parabolic arc for Z
+                    this.z = Math.sin(this.moveProgress * Math.PI) * 15;
+                }
+            } else {
+                // Sync visual render coordinates with grid
+            }
+
+            // Check if player drifted off camera
+            if (this.gridY < cameraY - 2) {
+                gameOver();
+            }
+        }
+
+        draw() {
+            let renderX = this.gridX;
+            let renderY = this.gridY;
+
+            if (this.isMoving) {
+                renderX = this.startX + (this.targetX - this.startX) * this.moveProgress;
+                renderY = this.startY + (this.targetY - this.startY) * this.moveProgress;
+            }
+
+            // Bloomington Student (Cream & Crimson)
+            // Legs
+            drawCube(renderX + 0.2, renderY, this.z, 0.2, 0.4, 10, '#222'); // Left leg
+            drawCube(renderX + 0.6, renderY, this.z, 0.2, 0.4, 10, '#222'); // Right leg
+            
+            // Body (Crimson Hoodie)
+            drawCube(renderX + 0.15, renderY, this.z + 10, 0.7, 0.6, 15, COLORS.crimson);
+            
+            // Backpack (Cream)
+            drawCube(renderX + 0.2, renderY - 0.2, this.z + 14, 0.6, 0.2, 10, COLORS.cream);
+
+            // Head
+            drawCube(renderX + 0.25, renderY, this.z + 25, 0.5, 0.5, 10, '#F5CCB0'); // Skin
+            
+            // Hair
+            drawCube(renderX + 0.25, renderY, this.z + 33, 0.5, 0.5, 4, '#3E2723');
+        }
     }
 
-    window.addEventListener("keydown", e => {
-      if (e.code === "Space") {
-        e.preventDefault();
-        setJumpPressed(true);
-      }
-    });
-    window.addEventListener("keyup", e => {
-      if (e.code === "Space") {
-        e.preventDefault();
-        setJumpPressed(false);
-      }
-    });
-    canvas.addEventListener("mousedown", () => setJumpPressed(true));
-    window.addEventListener("mouseup", () => setJumpPressed(false));
-    canvas.addEventListener("touchstart", e => {
-      e.preventDefault();
-      setJumpPressed(true);
-    }, { passive:false });
-    window.addEventListener("touchend", () => setJumpPressed(false));
+    class Lane {
+        constructor(index) {
+            this.index = index;
+            this.type = 'grass'; // grass, road, water
+            this.obstacles = new Array(COLS).fill(false); // Static obstacles
+            this.vehicles = []; // Moving objects
+            this.logs = []; // Moving logs
+            this.speed = 0;
+            this.direction = 1;
 
-    function rectIntersect(a,b){
-      return a.x < b.x + b.width &&
-             a.x + a.width > b.x &&
-             a.y < b.y + b.height &&
-             a.y + a.height > b.y;
+            this.generate();
+        }
+
+        generate() {
+            // First few lanes are safe grass
+            if (this.index < 3) {
+                this.type = 'grass';
+                if (this.index === 0) {
+                    // Draw Sample Gates
+                    this.obstacles[3] = 'gate_left';
+                    this.obstacles[9] = 'gate_right';
+                }
+                return;
+            }
+
+            const rand = Math.random();
+            
+            // Generate Type
+            if (rand < 0.4) {
+                this.type = 'road';
+                this.speed = (Math.random() * 0.05 + 0.03) * (Math.random() < 0.5 ? 1 : -1);
+                // Lane density
+                const count = Math.floor(Math.random() * 3) + 1;
+                for(let i=0; i<count; i++) {
+                    this.vehicles.push({
+                        x: Math.random() * COLS,
+                        type: Math.random() < 0.3 ? 'bus' : 'car' // 30% chance of Bus
+                    });
+                }
+            } else if (rand < 0.7) {
+                this.type = 'grass';
+                // Add Trees / Limestone
+                let treeChance = 0.2;
+                for(let i=0; i<COLS; i++) {
+                    if (Math.random() < treeChance) {
+                        this.obstacles[i] = Math.random() < 0.8 ? 'tree' : 'rock';
+                    }
+                }
+            } else {
+                this.type = 'water';
+                this.speed = (Math.random() * 0.04 + 0.02) * (Math.random() < 0.5 ? 1 : -1);
+                // Logs
+                const count = Math.floor(Math.random() * 3) + 2;
+                for(let i=0; i<count; i++) {
+                    this.logs.push({
+                        x: Math.random() * COLS,
+                        width: Math.random() < 0.5 ? 2 : 3
+                    });
+                }
+            }
+        }
+
+        update() {
+            if (this.type === 'road') {
+                this.vehicles.forEach(v => {
+                    v.x += this.speed;
+                    if (this.speed > 0 && v.x > COLS + 2) v.x = -3;
+                    if (this.speed < 0 && v.x < -3) v.x = COLS + 2;
+                });
+            } else if (this.type === 'water') {
+                this.logs.forEach(l => {
+                    l.x += this.speed;
+                    if (this.speed > 0 && l.x > COLS + 2) l.x = -l.width - 1;
+                    if (this.speed < 0 && l.x < -l.width - 1) l.x = COLS + 2;
+                });
+            }
+        }
+
+        draw() {
+            // Draw Base Plane
+            let baseColor = COLORS.grass;
+            if (this.index % 2 !== 0) baseColor = COLORS.grassLight;
+            if (this.type === 'road') baseColor = COLORS.asphalt;
+            if (this.type === 'water') baseColor = COLORS.waterDeep;
+
+            // Optimization: Draw one big rect for the lane floor
+            // But we need to use our projection helper logic manually for performance or use drawCube with height 0
+            
+            for (let x = 0; x < COLS; x++) {
+                // Determine color variation for limestone texture effect
+                let tileColor = baseColor;
+                if (this.type === 'grass' && this.index % 2 === 0 && x % 2 === 0) tileColor = COLORS.limestone; // Sidewalks
+                
+                // Draw floor tile
+                drawCube(x, this.index, -10, 1, 1, 10, tileColor);
+
+                // Draw Water (Surface)
+                if (this.type === 'water') {
+                    drawCube(x, this.index, -2, 1, 1, 2, COLORS.water, COLORS.water);
+                }
+
+                // Draw Static Obstacles
+                if (this.obstacles[x]) {
+                    if (this.obstacles[x] === 'tree') {
+                        // Trunk
+                        drawCube(x + 0.3, this.index, 0, 0.4, 0.4, 10, COLORS.treeTrunk);
+                        // Leaves (Autumn Colors)
+                        let leafColor = [COLORS.leavesOrange, COLORS.leavesRed, COLORS.leavesYellow][Math.floor(Math.random()*3)];
+                        drawCube(x, this.index, 10, 1, 1, 15, leafColor);
+                        drawCube(x + 0.2, this.index, 25, 0.6, 0.6, 10, leafColor);
+                    } else if (this.obstacles[x] === 'rock') {
+                        drawCube(x + 0.1, this.index, 0, 0.8, 0.8, 8, COLORS.limestoneDark);
+                    } else if (this.obstacles[x] === 'gate_left' || this.obstacles[x] === 'gate_right') {
+                        // Sample Gate Pillar
+                        drawCube(x, this.index, 0, 1, 1, 40, COLORS.limestone);
+                        drawCube(x - 0.1, this.index, 35, 1.2, 1.2, 5, COLORS.limestoneDark);
+                    }
+                }
+            }
+
+            // Draw Dynamic Objects
+            if (this.type === 'water') {
+                this.logs.forEach(l => {
+                    drawCube(l.x, this.index, 0, l.width, 0.8, 5, '#5D4037', '#795548');
+                });
+            }
+
+            if (this.type === 'road') {
+                this.vehicles.forEach(v => {
+                    if (v.type === 'bus') {
+                        // Campus Bus (Red and White)
+                        drawCube(v.x, this.index, 0, 2.5, 0.9, 15, '#FFFFFF'); // Body White
+                        drawCube(v.x, this.index, 5, 2.5, 0.9, 5, COLORS.crimson); // Stripe
+                        drawCube(v.x + 0.2, this.index, 15, 2.1, 0.9, 2, '#333'); // Windows
+                    } else {
+                        // Car
+                        let carColor = ['#1E88E5', '#FDD835', '#43A047'][Math.floor(v.x % 3)];
+                        drawCube(v.x, this.index, 0, 1.5, 0.8, 10, carColor);
+                        drawCube(v.x + 0.2, this.index, 10, 1.1, 0.6, 5, '#ACE'); // Windows
+                    }
+                });
+            }
+        }
     }
 
-    function doJump(mult = 1) {
-      const level = levels[currentLevelIndex];
-      player.vy = -level.jumpForce * mult;
-      player.onGround = false;
-      player.coyoteFrames = 0;
+    // ---------------------------------------------------------
+    // Game Logic
+    // ---------------------------------------------------------
+
+    function initGame() {
+        lanes = [];
+        score = 0;
+        cameraY = 0;
+        gameSpeed = 0.002;
+        
+        // Initial set of lanes
+        for(let i=0; i<20; i++) {
+            lanes.push(new Lane(i));
+        }
+        
+        player = new Player();
+    }
+
+    function checkCollision() {
+        const pX = player.gridX;
+        const pY = player.gridY;
+        
+        // Find lane
+        const currentLane = lanes.find(l => l.index === pY);
+        
+        if (!currentLane) return;
+
+        // Water Logic
+        if (currentLane.type === 'water') {
+            // Check if on log
+            let onLog = false;
+            let logSpeed = 0;
+            
+            // Simple AABB for logs
+            // Player is size 1 (approx), Log is size l.width
+            // Coords are top-left based visually, but center logic is easier
+            // Using visual approximation
+            
+            currentLane.logs.forEach(l => {
+                if (pX + 0.5 > l.x && pX + 0.5 < l.x + l.width) {
+                    onLog = true;
+                    logSpeed = currentLane.speed;
+                }
+            });
+
+            if (onLog) {
+                // Move player with log
+                // Note: This modifies visual X, ideally we snap grid, but for smooth ride we update grid float
+                // For this simple grid engine, we'll just drift the player laterally
+                // If they hit edge of screen -> Die
+                player.gridX += logSpeed; 
+                player.targetX += logSpeed; 
+                player.startX += logSpeed;
+            } else {
+                if (!player.isMoving) gameOver(); // Drowned
+            }
+        }
+    }
+
+    function checkDynamicCollisions() {
+        // Continuous collision detection for cars/buses
+        const pX = player.gridX + 0.5; // Center of player
+        const pY = player.gridY;
+
+        const currentLane = lanes.find(l => l.index === Math.round(pY)); // Round because moving log might offset Y slightly (though we didn't implement log Y drift)
+        
+        if (currentLane && currentLane.type === 'road') {
+            currentLane.vehicles.forEach(v => {
+                const vCenter = v.x + (v.type === 'bus' ? 1.25 : 0.75);
+                const vWidth = v.type === 'bus' ? 2.5 : 1.5;
+                
+                // Simple distance check
+                if (Math.abs(pX - vCenter) < (vWidth / 2) + 0.3) {
+                     // Hit!
+                     gameOver();
+                }
+            });
+        }
+        
+        // Check bounds while riding log
+        if (player.gridX < -1 || player.gridX > COLS) {
+            gameOver();
+        }
     }
 
     function update() {
-      jumpJustPressed = false; // will be set by events each frame
-    }
+        if (!gameActive) return;
 
-    // Because we can't sync events & frames perfectly, we'll check events during loop:
-    let lastFrameTime = performance.now();
+        // Move Camera
+        cameraY += gameSpeed;
+        if (player.gridY > cameraY + 6) cameraY = player.gridY - 6; // Keep player in view if they rush ahead
 
-    function gameStep() {
-      const now = performance.now();
-      const dt = Math.min((now - lastFrameTime) / 16.666, 2); // ~60fps normalised
-      lastFrameTime = now;
-
-      if (gameState === "playing") {
-        const level = levels[currentLevelIndex];
-        levelTimer += dt / 60;
-
-        // Auto-run
-        player.x += level.speed * dt;
-
-        // Gravity
-        player.vy += level.gravity * dt;
-        player.y += player.vy * dt;
-
-        // Ground / coyote
-        if (player.y + player.height >= GROUND_Y) {
-          if (!player.onGround) {
-            // landing
-            player.onGround = true;
-            player.coyoteFrames = 0;
-          }
-          player.y = GROUND_Y - player.height;
-          player.vy = 0;
-        } else {
-          if (player.onGround) {
-            // just left ground
-            player.onGround = false;
-            player.coyoteFrames = 4;
-          } else if (player.coyoteFrames > 0) {
-            player.coyoteFrames -= 1;
-          }
+        // Generate new lanes
+        const lastLaneIndex = lanes[lanes.length-1].index;
+        if (lastLaneIndex < cameraY + ROWS_VISIBLE + 5) {
+            lanes.push(new Lane(lastLaneIndex + 1));
         }
 
-        // Jump input: normal jump or coyote
-        if (jumpJustPressed && (player.onGround || player.coyoteFrames > 0)) {
-          doJump(1);
+        // Remove old lanes
+        if (lanes[0].index < cameraY - 5) {
+            lanes.shift();
         }
 
-        // camera
-        const targetCam = player.x - 220;
-        cameraX += (targetCam - cameraX) * 0.15 * dt;
+        // Update Objects
+        lanes.forEach(l => l.update());
+        player.update();
+        
+        checkDynamicCollisions();
 
-        // trail
-        trail.push({ x: player.x, y: player.y });
-        if (trail.length > 22) trail.shift();
-
-        const playerRectWorld = {
-          x: player.x,
-          y: player.y,
-          width: player.width,
-          height: player.height
-        };
-
-        // Pads (green jump pads on ground)
-        if (level.pads) {
-          for (const pad of level.pads) {
-            const padRect = {
-              x: pad.x,
-              y: GROUND_Y - 8,
-              width: pad.width,
-              height: 12
-            };
-            if (rectIntersect(playerRectWorld, padRect) && player.onGround && player.vy >= 0 && jumpPressed) {
-              doJump(1.3);
-            }
-          }
-        }
-
-        // Orbs (yellow & blue)
-        if (level.orbs) {
-          for (const orb of level.orbs) {
-            if (orb.used) continue;
-            const orbRect = {
-              x: orb.x - 20,
-              y: GROUND_Y - 70,
-              width: 40,
-              height: 40
-            };
-            if (rectIntersect(playerRectWorld, orbRect) && jumpJustPressed) {
-              orb.used = true;
-              if (orb.type === "jump") {
-                doJump(1.35);
-              } else if (orb.type === "shield") {
-                effects.shield = true;
-                effects.shieldFlash = 24;
-              }
-            }
-          }
-        }
-
-        // Spikes
-        const spikeScale = level.spikeScale || 1;
-        let hitSpike = false;
-        for (const spike of level.spikes) {
-          const h = spike.h * spikeScale;
-          const spikeRect = {
-            x: spike.x,
-            y: GROUND_Y - h,
-            width: 35,
-            height: h
-          };
-          if (rectIntersect(playerRectWorld, spikeRect)) {
-            hitSpike = true;
-            break;
-          }
-        }
-
-        if (hitSpike) {
-          if (effects.shield) {
-            effects.shield = false;
-            effects.shieldFlash = 26;
-          } else {
-            gameState = "dead";
-            gameOverText.textContent = "You hit a spike! Try changing your jump timing or using pads/orbs.";
-            showOverlay(gameOverOverlay);
-          }
-        }
-
-        // Level complete
-        if (player.x - 40 > level.length) {
-          gameState = "complete";
-          completeText.textContent = `${level.name} cleared in ${levelTimer.toFixed(1)}s`;
-          showOverlay(completeOverlay);
-        }
-
-        // Fall fail-safe
-        if (player.y > HEIGHT + 200) {
-          gameState = "dead";
-          gameOverText.textContent = "You fell off! Stay on the ground blocks.";
-          showOverlay(gameOverOverlay);
-        }
-
-        if (effects.shieldFlash > 0) effects.shieldFlash--;
-      }
-
-      render();
-      jumpJustPressed = false;
-      requestAnimationFrame(gameStep);
-    }
-
-    function drawBackground(level) {
-      // solid base
-      ctx.fillStyle = "#020617";
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-      // Pulsing vignette
-      const t = performance.now() / 1200;
-      const radius = 500 + Math.sin(t) * 40;
-      const grad = ctx.createRadialGradient(
-        WIDTH/2, HEIGHT*0.25, 10,
-        WIDTH/2, HEIGHT*0.25, radius
-      );
-      grad.addColorStop(0, "#020617");
-      grad.addColorStop(1, "#000");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0,0,WIDTH,HEIGHT);
-
-      // Grid
-      ctx.save();
-      ctx.strokeStyle = level.gridColor;
-      ctx.lineWidth = 1;
-      const gridSize = 30;
-      const offsetX = -((cameraX * 0.35) % gridSize);
-      const offsetY = -((performance.now()/80) % gridSize);
-
-      ctx.beginPath();
-      for (let x = offsetX; x < WIDTH; x += gridSize) {
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, HEIGHT);
-      }
-      for (let y = offsetY; y < HEIGHT; y += gridSize) {
-        ctx.moveTo(0, y);
-        ctx.lineTo(WIDTH, y);
-      }
-      ctx.stroke();
-      ctx.restore();
-
-      // Faint stars
-      ctx.fillStyle = "rgba(248,250,252,0.18)";
-      for (let i = 0; i < 40; i++) {
-        const x = (i * 180 - cameraX * 0.15) % (WIDTH + 200) - 100;
-        const y = (i * 91) % (HEIGHT - 200) + 20;
-        ctx.fillRect(x, y, 2, 2);
-      }
-    }
-
-    function drawLevel() {
-      const level = levels[currentLevelIndex];
-      drawBackground(level);
-
-      // Ground blocks
-      const blockSize = 40;
-      for (let x = -blockSize; x < WIDTH + blockSize; x += blockSize) {
-        const worldX = x + Math.floor(cameraX / blockSize) * blockSize;
-        const screenX = worldX - cameraX;
-        ctx.fillStyle = level.floorColor;
-        ctx.fillRect(screenX, GROUND_Y, blockSize, HEIGHT - GROUND_Y);
-
-        ctx.strokeStyle = "rgba(15,23,42,0.9)";
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(screenX, GROUND_Y, blockSize, HEIGHT - GROUND_Y);
-      }
-
-      // Ground top line
-      ctx.strokeStyle = "rgba(148,163,184,0.6)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(0, GROUND_Y + 0.5);
-      ctx.lineTo(WIDTH, GROUND_Y + 0.5);
-      ctx.stroke();
-
-      // Pads
-      if (level.pads) {
-        ctx.save();
-        ctx.shadowColor = "#4ade80";
-        ctx.shadowBlur = 20;
-        for (const pad of level.pads) {
-          const x = pad.x - cameraX;
-          const y = GROUND_Y - 6;
-          if (x + pad.width < -40 || x > WIDTH + 40) continue;
-
-          const t = performance.now() / 500;
-          const bob = Math.sin(t + pad.x * 0.002) * 2;
-
-          const grad = ctx.createLinearGradient(x, y-12, x, y+12);
-          grad.addColorStop(0, "#bbf7d0");
-          grad.addColorStop(1, "#4ade80");
-          ctx.fillStyle = grad;
-          ctx.fillRect(x, y - 6 + bob, pad.width, 12);
-
-          ctx.strokeStyle = "rgba(22,101,52,0.9)";
-          ctx.lineWidth = 2;
-          ctx.strokeRect(x, y - 6 + bob, pad.width, 12);
-        }
-        ctx.restore();
-      }
-
-      // Spikes
-      ctx.save();
-      ctx.shadowColor = level.spikeColor;
-      ctx.shadowBlur = 22;
-      ctx.fillStyle = level.spikeColor;
-
-      const spikeScale = level.spikeScale || 1;
-      for (const spike of level.spikes) {
-        const h = spike.h * spikeScale;
-        const baseX = spike.x - cameraX;
-        const baseY = GROUND_Y;
-        const spikeWidth = 35;
-        if (baseX + spikeWidth < -50 || baseX > WIDTH + 50) continue;
-
-        ctx.beginPath();
-        ctx.moveTo(baseX, baseY);
-        ctx.lineTo(baseX + spikeWidth/2, baseY - h);
-        ctx.lineTo(baseX + spikeWidth, baseY);
-        ctx.closePath();
-        ctx.fill();
-      }
-      ctx.restore();
-
-      // Orbs
-      if (level.orbs) {
-        for (const orb of level.orbs) {
-          if (orb.used) continue;
-          const screenX = orb.x - cameraX;
-          const screenY = GROUND_Y - 60;
-          if (screenX < -40 || screenX > WIDTH + 40) continue;
-
-          ctx.save();
-          const t = performance.now() / 400;
-          const bob = Math.sin(t + orb.x * 0.002) * 4;
-          ctx.translate(screenX, screenY + bob);
-
-          let outerColor, innerColor;
-          if (orb.type === "jump") {
-            outerColor = "#f97316";
-            innerColor = "#facc15";
-          } else {
-            outerColor = "#22d3ee";
-            innerColor = "#e0f2fe";
-          }
-
-          ctx.shadowColor = outerColor;
-          ctx.shadowBlur = 22;
-
-          const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, 18);
-          grad.addColorStop(0, innerColor);
-          grad.addColorStop(1, outerColor);
-          ctx.fillStyle = grad;
-          ctx.beginPath();
-          ctx.arc(0,0,16,0,Math.PI*2);
-          ctx.fill();
-
-          ctx.shadowBlur = 0;
-          ctx.fillStyle = "rgba(15,23,42,0.9)";
-          if (orb.type === "jump") {
-            ctx.beginPath();
-            ctx.moveTo(-4, 5);
-            ctx.lineTo(0, -6);
-            ctx.lineTo(4, 5);
-            ctx.closePath();
-            ctx.fill();
-          } else {
-            ctx.beginPath();
-            ctx.moveTo(0,-6);
-            ctx.lineTo(7,-1);
-            ctx.lineTo(4,7);
-            ctx.lineTo(-4,7);
-            ctx.lineTo(-7,-1);
-            ctx.closePath();
-            ctx.fill();
-          }
-          ctx.restore();
-        }
-      }
-
-      // Portal
-      const portalX = level.length - cameraX;
-      const portalWidth = 42;
-      const portalHeight = 90;
-      const portalY = GROUND_Y - portalHeight;
-
-      ctx.save();
-      ctx.translate(portalX + portalWidth/2, portalY + portalHeight/2);
-      const pulse = Math.sin(performance.now()/200) * 0.2 + 1.05;
-      ctx.scale(pulse, pulse);
-
-      ctx.shadowColor = level.portalColor;
-      ctx.shadowBlur = 30;
-
-      const portalGrad = ctx.createLinearGradient(-portalWidth/2, -portalHeight/2, portalWidth/2, portalHeight/2);
-      portalGrad.addColorStop(0, "rgba(248,250,252,0.95)");
-      portalGrad.addColorStop(1, level.portalColor);
-      ctx.fillStyle = portalGrad;
-      ctx.fillRect(-portalWidth/2, -portalHeight/2, portalWidth, portalHeight);
-
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = "rgba(15,23,42,0.9)";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(-portalWidth/2, -portalHeight/2, portalWidth, portalHeight);
-      ctx.restore();
-
-      // Player trail
-      ctx.save();
-      for (let i=0;i<trail.length;i++){
-        const pos = trail[i];
-        const alpha = i / trail.length;
-        const size = PLAYER_SIZE * (0.7 + alpha*0.25);
-        const tx = pos.x - cameraX + PLAYER_SIZE/2;
-        const ty = pos.y + PLAYER_SIZE/2;
-
-        ctx.globalAlpha = alpha * 0.45;
-        ctx.fillStyle = "#22d3ee";
-        ctx.beginPath();
-        ctx.roundRect(tx-size/2, ty-size/2, size, size, 5);
-        ctx.fill();
-      }
-      ctx.restore();
-
-      // Player
-      const px = player.x - cameraX;
-      const py = player.y;
-      ctx.save();
-      ctx.translate(px + PLAYER_SIZE/2, py + PLAYER_SIZE/2);
-
-      const rotation = player.onGround ? 0 : (player.x / 18) % (Math.PI * 2);
-      ctx.rotate(rotation);
-
-      ctx.shadowColor = effects.shield ? "#38bdf8" : "#22d3ee";
-      ctx.shadowBlur = effects.shield ? 32 : 20;
-
-      let baseColor = player.color;
-      if (effects.shieldFlash > 0 && effects.shield) baseColor = "#e0f2fe";
-
-      ctx.fillStyle = baseColor;
-      ctx.beginPath();
-      ctx.roundRect(-PLAYER_SIZE/2, -PLAYER_SIZE/2, PLAYER_SIZE, PLAYER_SIZE, 6);
-      ctx.fill();
-
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = "rgba(15,23,42,0.9)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // inner square
-      ctx.fillStyle = "rgba(15,23,42,0.85)";
-      ctx.beginPath();
-      ctx.roundRect(-PLAYER_SIZE/3, -PLAYER_SIZE/3, (PLAYER_SIZE*2)/3, (PLAYER_SIZE*2)/3, 4);
-      ctx.fill();
-
-      ctx.restore();
-
-      // HUD
-      ctx.fillStyle = "rgba(15,23,42,0.8)";
-      ctx.fillRect(15, 15, 260, 66);
-      ctx.strokeStyle = "rgba(148,163,184,0.7)";
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(15, 15, 260, 66);
-
-      ctx.fillStyle = "#e5e7eb";
-      ctx.font = "15px system-ui";
-      ctx.fillText(`Level ${currentLevelIndex + 1}: ${level.name}`, 28, 38);
-
-      const progress = Math.min(player.x / level.length, 1);
-      ctx.fillStyle = "rgba(148,163,184,0.35)";
-      ctx.fillRect(28, 44, 200, 8);
-      ctx.fillStyle = "#22d3ee";
-      ctx.fillRect(28, 44, 200 * progress, 8);
-
-      ctx.font = "11px system-ui";
-      ctx.fillStyle = "#9ca3af";
-      ctx.fillText(`Time: ${levelTimer.toFixed(1)}s`, 28, 62);
-
-      if (effects.shield) {
-        ctx.fillStyle = "#38bdf8";
-        ctx.beginPath();
-        ctx.arc(230, 52, 7, 0, Math.PI*2);
-        ctx.fill();
-        ctx.fillStyle = "#e5e7eb";
-        ctx.fillText("Shield", 245, 56);
-      }
+        // Increase Difficulty
+        gameSpeed += 0.00001;
     }
 
     function render() {
-      if (gameState === "menu") {
-        ctx.fillStyle = "#020617";
-        ctx.fillRect(0,0,WIDTH,HEIGHT);
-      } else {
-        drawLevel();
-      }
+        ctx.clearRect(0, 0, width, height);
+        
+        // Draw lanes
+        // We must draw from Furthest (Top of screen) to Nearest (Bottom) for painter's algorithm
+        // In our coordinate system, Higher Index = Further UP in world, but visually we draw based on Y position.
+        
+        // Actually, in isometric/pseudo-3D, we usually draw back-to-front (lowest Y to highest Y on screen).
+        // Our CameraY moves UP (increasing index).
+        // So we draw lanes with highest index first? No.
+        // Screen Y = const - gridY. Higher gridY = Higher up screen (lower pixel value).
+        // We need to draw the "back" (top of screen) stuff first.
+        // Back stuff = Higher GridY.
+        // Front stuff = Lower GridY.
+        
+        // Filter visible lanes
+        const visibleLanes = lanes.filter(l => l.index > cameraY - 2 && l.index < cameraY + ROWS_VISIBLE + 2);
+        
+        // Sort: We want to draw High Index (Back) first, Low Index (Front) last.
+        // Wait, if I draw row 10 (back) then row 9 (front), row 9 covers row 10's bottom. Correct.
+        visibleLanes.sort((a, b) => b.index - a.index);
+
+        visibleLanes.forEach(lane => {
+            lane.draw();
+            // If player is in this lane, draw player?
+            // To handle Z-indexing correctly with objects, we need to draw player "inside" the loop or handle depth carefully.
+            // Simplified approach: Draw player after the lane he is standing on (or moving to).
+            
+            // Simple Hack: If this lane index matches player index (rounded), draw player.
+            // Actually, if player is jumping, he might be between lanes.
+            // Let's draw player when we draw the lane "below" him visually.
+            
+            let playerRenderY = player.isMoving ? 
+                player.startY + (player.targetY - player.startY) * player.moveProgress : 
+                player.gridY;
+                
+            if (Math.round(playerRenderY) === lane.index) {
+                player.draw();
+            }
+        });
     }
 
-    // Start loop
-    showOverlay(menuOverlay);
-    hideOverlay(completeOverlay);
-    hideOverlay(gameOverOverlay);
-    gameStep();
-  </script>
+    function loop() {
+        update();
+        render();
+        requestAnimationFrame(loop);
+    }
+
+    // ---------------------------------------------------------
+    // Inputs & Control
+    // ---------------------------------------------------------
+
+    function handleInput(key) {
+        if (!gameActive) return;
+        
+        switch(key) {
+            case 'ArrowUp': 
+            case 'w':
+                player.move(0, 1); break;
+            case 'ArrowDown': 
+            case 's':
+                player.move(0, -1); break;
+            case 'ArrowLeft': 
+            case 'a':
+                player.move(-1, 0); break;
+            case 'ArrowRight': 
+            case 'd':
+                player.move(1, 0); break;
+        }
+    }
+
+    window.addEventListener('keydown', e => handleInput(e.key));
+
+    // Touch controls
+    let touchStartX = 0;
+    let touchStartY = 0;
+    
+    window.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+    }, {passive: false});
+
+    window.addEventListener('touchend', e => {
+        if (!gameActive) return;
+        const dx = e.changedTouches[0].screenX - touchStartX;
+        const dy = e.changedTouches[0].screenY - touchStartY;
+        
+        if (Math.abs(dx) > Math.abs(dy)) {
+            // Horizontal
+            if (Math.abs(dx) > 30) handleInput(dx > 0 ? 'ArrowRight' : 'ArrowLeft');
+        } else {
+            // Vertical
+            // Note: Swipe UP on screen is Negative Y, but we want to move player UP (Positive Index)
+            if (Math.abs(dy) > 30) handleInput(dy < 0 ? 'ArrowUp' : 'ArrowDown');
+            else handleInput('ArrowUp'); // Tap acts as move forward
+        }
+    }, {passive: false});
+
+    // ---------------------------------------------------------
+    // Game Management
+    // ---------------------------------------------------------
+
+    function startGame() {
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('game-over-screen').classList.add('hidden');
+        document.getElementById('score-display').innerText = '0';
+        initGame();
+        gameActive = true;
+    }
+
+    function gameOver() {
+        gameActive = false;
+        document.getElementById('game-over-screen').classList.remove('hidden');
+        document.getElementById('final-score-text').innerText = `Score: ${score}`;
+    }
+
+    function resetGame() {
+        startGame();
+    }
+
+    // Start loop immediately
+    initGame();
+    loop();
+
+</script>
 </body>
 </html>
-
